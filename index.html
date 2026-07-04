@@ -442,15 +442,13 @@
 <body>
 
 <header>
-  <div class="logo">BRUNOTTI <span>SS27 · Product Data Tool · v1.6</span></div>
+  <div class="logo">BRUNOTTI <span>SS27 · Product Data Tool · v1.7</span></div>
 
   <button class="back-btn" id="backBtn" onclick="goBack()" title="Terug naar vorig scherm">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     Terug
   </button>
   <div class="header-actions">
-    <button class="btn btn-ghost" onclick="resetToExcelData()" title="Verwijder lokale wijzigingen en laad de originele Excel data opnieuw">↺ Excel data</button>
-    <button class="btn btn-ghost" onclick="exportCSV()">⬇ Export CSV</button>
     <button class="btn btn-success" onclick="saveEntry()">✓ Opslaan</button>
   </div>
 </header>
@@ -915,6 +913,7 @@
         </select>
       </div>
       <button class="btn btn-success btn-sm" onclick="addVendorRow()">+ Nieuw</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportVendorsCSV()">⬇ Export CSV</button>
     </div>
     <div class="tbl-wrap">
       <table>
@@ -931,6 +930,7 @@
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <div class="sticky-toolbar"><input type="text" id="colourSearch" placeholder="🔍 Zoek kleur..." oninput="renderStamdata()" style="max-width:280px"></div>
       <button class="btn btn-success btn-sm" onclick="addColourRow()">+ Nieuw</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportColoursCSV()">⬇ Export CSV</button>
     </div>
     <div class="tbl-wrap">
       <table>
@@ -949,6 +949,7 @@
         <option value="URBAN">Urban</option>
       </select>
       <button class="btn btn-success btn-sm" onclick="addFabricRow()">+ Nieuw</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportFabricsCSV()">⬇ Export CSV</button>
     </div>
     <div class="tbl-wrap">
       <table>
@@ -959,8 +960,9 @@
   </div>
 
   <div id="stam-hscodes" class="card hidden">
-    <div style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
       <div class="sticky-toolbar"><input type="text" id="hsSearch" placeholder="🔍 Zoek HS code of omschrijving..." oninput="renderStamdata()" style="max-width:340px"></div>
+      <button class="btn btn-ghost btn-sm" onclick="exportHsCodesCSV()">⬇ Export CSV</button>
     </div>
     <div class="tbl-wrap">
       <table>
@@ -974,6 +976,7 @@
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <span style="font-size:13px;color:var(--ink-mid)">Pasvormcodes zoals gebruikt in de collectielijst</span>
       <button class="btn btn-success btn-sm" onclick="addFitRow()">+ Nieuw</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportFitsCSV()">⬇ Export CSV</button>
     </div>
     <div class="tbl-wrap">
       <table>
@@ -2172,6 +2175,65 @@ function exportCSVData(data, filename) {
 
 function exportCSV() {
   exportCSVData(entries, 'brunotti_ss27');
+}
+
+// ── Generic export for stamdata categories (leveranciers, kleuren, stoffen, HS codes, fits) ──
+function exportGenericCSV(data, columns, filename) {
+  if (!data || !data.length) { showToast('Geen data om te exporteren'); return; }
+  const headers = columns.map(c => c.label);
+  const rows = data.map(item => columns.map(c => {
+    const v = item[c.key];
+    return v === null || v === undefined ? '' : `"${String(v).replace(/"/g,'""')}"`;
+  }));
+  const csv = [headers.map(h=>`"${h}"`).join(','), ...rows.map(r=>r.join(','))].join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${filename}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`⬇ ${data.length} rijen geëxporteerd`);
+}
+
+function exportVendorsCSV() {
+  exportGenericCSV(masterData.vendors, [
+    { key: 'name', label: 'Naam' }, { key: 'code', label: 'Code' },
+    { key: 'country', label: 'Land' }, { key: 'currency', label: 'Valuta' },
+    { key: 'importFactor', label: 'Import factor' }, { key: 'currencyFactor', label: 'FX factor' },
+    { key: 'comFee', label: 'Com. Fee' }, { key: 'samplingFOB', label: 'Sample FOB' },
+    { key: 'notes', label: 'Notes' }
+  ], 'brunotti_leveranciers');
+}
+
+function exportColoursCSV() {
+  exportGenericCSV(masterData.colours, [
+    { key: 'code', label: 'Code' }, { key: 'name', label: 'Naam' },
+    { key: 'pantone', label: 'Pantone' }, { key: 'fedas', label: 'Fedas' }
+  ], 'brunotti_kleuren');
+}
+
+function exportFabricsCSV() {
+  exportGenericCSV(masterData.fabrics, [
+    { key: 'quality', label: 'Kwaliteit' }, { key: 'composition', label: 'Samenstelling' },
+    { key: 'weight', label: 'Gewicht' }, { key: 'supplier', label: 'Leverancier' },
+    { key: 'fabricCode', label: 'Fabric Code' }, { key: 'type', label: 'Type' },
+    { key: 'remark', label: 'Opmerking' }
+  ], 'brunotti_stoffen');
+}
+
+function exportHsCodesCSV() {
+  exportGenericCSV(masterData.hsCodes, [
+    { key: 'code', label: 'HS Code' }, { key: 'descNL', label: 'NL omschrijving' },
+    { key: 'descEN', label: 'EN omschrijving' }, { key: 'category', label: 'Categorie' },
+    { key: 'weight', label: 'Gewicht (kg)' }
+  ], 'brunotti_hscodes');
+}
+
+function exportFitsCSV() {
+  exportGenericCSV(masterData.fits, [
+    { key: 'no', label: 'Nummer' }, { key: 'name', label: 'Naam' }
+  ], 'brunotti_pasvorm');
 }
 
 
@@ -3843,10 +3905,22 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
-    version: '1.6',
+    version: '1.7',
     date: '2026-07-04',
     author: 'Martijn Cornelissen',
     active: true,
+    features: [
+      { name: 'Header opgeschoond', desc: 'Onduidelijke knoppen "Excel data" (reset) en "Export CSV" verwijderd uit de bovenbalk — alleen "Opslaan" blijft staan', tab: null, icon: '🧹' },
+      { name: 'Export per stamdata-categorie', desc: 'Elke stamdata-subtab (Leveranciers, Kleuren, Stoffen, HS Codes, Pasvorm) heeft nu een eigen Export CSV-knop', tab: 'stamdata', icon: '⬇' },
+      { name: 'Google Sheet sync — permissiefix', desc: 'Apps Script vroeg alsnog Sheets-rechten aan; nieuwe autorisatiefunctie toegevoegd om dit eenmalig goed te zetten', tab: 'versies', icon: '🔧' },
+      { name: 'Conditionele opmaak bugfix', desc: 'clearConditionalFormatRules werd op de verkeerde variabele aangeroepen waardoor opslaan naar Google Sheet vastliep', tab: 'versies', icon: '🔧' },
+    ]
+  },
+  {
+    version: '1.6',
+    date: '2026-07-04',
+    author: 'Martijn Cornelissen',
+    active: false,
     features: [
       { name: 'Google Sheet sync', desc: 'Bij elke sync naar Google Drive wordt automatisch een live Google Sheet aangemaakt met alle 686 entries, berekende marges en conditionele opmaak (groen/oranje/rood)', tab: 'versies', icon: '✅' },
       { name: 'Apps Script bugfix',  desc: 'Fout in getFilesByMimeType opgelost zodat de Google Sheet correct aangemaakt wordt', tab: 'versies', icon: '🔧' },
