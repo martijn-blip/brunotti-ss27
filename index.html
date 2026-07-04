@@ -442,7 +442,7 @@
 <body>
 
 <header>
-  <div class="logo">BRUNOTTI <span>SS27 · Product Data Tool · v1.5</span></div>
+  <div class="logo">BRUNOTTI <span>SS27 · Product Data Tool · v1.6</span></div>
 
   <button class="back-btn" id="backBtn" onclick="goBack()" title="Terug naar vorig scherm">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -3842,6 +3842,18 @@ async function applyBulkEdit() {
 // ══ APP CHANGELOG ════════════════════════════════════════════
 
 const APP_CHANGELOG = [
+  {
+    version: '1.6',
+    date: '2026-07-04',
+    author: 'Martijn Cornelissen',
+    active: true,
+    features: [
+      { name: 'Google Sheet sync', desc: 'Bij elke sync naar Google Drive wordt automatisch een live Google Sheet aangemaakt met alle 686 entries, berekende marges en conditionele opmaak (groen/oranje/rood)', tab: 'versies', icon: '✅' },
+      { name: 'Apps Script bugfix',  desc: 'Fout in getFilesByMimeType opgelost zodat de Google Sheet correct aangemaakt wordt', tab: 'versies', icon: '🔧' },
+      { name: 'GitHub Pages hosting', desc: 'App beschikbaar via https://martijn-blip.github.io/brunotti-ss27 — werkt op iPad, iPhone en elke browser zonder download', tab: null, icon: '🌐' },
+      { name: 'Automatische GitHub deploy', desc: 'Nieuwe versies worden automatisch gepusht naar GitHub via de API — geen handmatige upload meer nodig', tab: null, icon: '🚀' },
+    ]
+  },
   {
     version: '1.5',
     date: '2026-07-04',
