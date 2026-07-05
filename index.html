@@ -442,15 +442,12 @@
 <body>
 
 <header>
-  <div class="logo">BRUNOTTI <span>SS27 · Product Data Tool · v1.7</span></div>
+  <div class="logo">BRUNOTTI <span>SS27 · Product Data Tool · v<span id="headerVersion">1.7</span></span></div>
 
   <button class="back-btn" id="backBtn" onclick="goBack()" title="Terug naar vorig scherm">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     Terug
   </button>
-  <div class="header-actions">
-    <button class="btn btn-success" onclick="saveEntry()">✓ Opslaan</button>
-  </div>
 </header>
 
 <div class="tabs">
@@ -1032,14 +1029,19 @@
 
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <button class="btn btn-primary btn-sm" onclick="saveGasSettings()">Opslaan instellingen</button>
-            <button class="btn btn-ghost btn-sm" onclick="syncToSharePoint()">↑ Sync naar Drive</button>
-            <button class="btn btn-ghost btn-sm" onclick="loadFromSharePoint(false)">↓ Laden van Drive</button>
+            <button class="btn btn-primary btn-sm" id="syncSaveBtn" onclick="syncToSharePoint()">🔄 Synchroniseren met team</button>
+            <button class="btn btn-ghost btn-sm" id="syncLoadBtn" onclick="loadFromSharePoint(false)">⬇ Ophalen van team</button>
           </div>
           <div id="gasStatusDetail" style="margin-top:8px;font-size:10px;color:var(--ink-low)"></div>
+          <a id="openSheetBtn" href="#" target="_blank" rel="noopener"
+             style="display:none;margin-top:12px;align-items:center;gap:6px;padding:10px 14px;background:#0f9d58;color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;width:fit-content">
+            📊 Open live Google Sheet — alle data &amp; stamdata
+          </a>
         </div>
       </div>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-ghost" onclick="exportAllVersions()">⬇ Export alle versies</button>
+        <button class="btn btn-ghost" id="zipBtn" onclick="downloadZip()">⬇ Download volledige export (ZIP)</button>
         <button class="btn btn-success" onclick="saveManualSnapshot()">📸 Snapshot opslaan</button>
       </div>
     </div>
@@ -1297,6 +1299,7 @@ let editingIndex = -1;
 
 // ══ INIT ════════════════════════════════════════════════════
 window.onload = () => {
+  document.getElementById('headerVersion').textContent = APP_VERSION;
   // Populate vendor dropdown
   const vSel = document.getElementById('f_vendor');
   Object.keys(VENDORS).sort().forEach(name => {
@@ -2178,62 +2181,80 @@ function exportCSV() {
 }
 
 // ── Generic export for stamdata categories (leveranciers, kleuren, stoffen, HS codes, fits) ──
-function exportGenericCSV(data, columns, filename) {
-  if (!data || !data.length) { showToast('Geen data om te exporteren'); return; }
+// ── Pure CSV string builder (no download side-effect) ────────
+function buildCSVString(data, columns) {
   const headers = columns.map(c => c.label);
-  const rows = data.map(item => columns.map(c => {
+  const rows = (data || []).map(item => columns.map(c => {
     const v = item[c.key];
     return v === null || v === undefined ? '' : `"${String(v).replace(/"/g,'""')}"`;
   }));
-  const csv = [headers.map(h=>`"${h}"`).join(','), ...rows.map(r=>r.join(','))].join('\n');
-  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  return '\uFEFF' + [headers.map(h=>`"${h}"`).join(','), ...rows.map(r=>r.join(','))].join('\n');
+}
+
+function downloadCSVString(csvString, filename) {
+  const blob = new Blob([csvString], {type:'text/csv;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = `${filename}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function exportGenericCSV(data, columns, filename) {
+  if (!data || !data.length) { showToast('Geen data om te exporteren'); return; }
+  downloadCSVString(buildCSVString(data, columns), filename);
   showToast(`⬇ ${data.length} rijen geëxporteerd`);
 }
 
-function exportVendorsCSV() {
-  exportGenericCSV(masterData.vendors, [
+// Shared column definitions — used by both the per-tab export buttons
+// and the full ZIP export, so the two never drift out of sync.
+const STAMDATA_COLUMNS = {
+  vendors: [
     { key: 'name', label: 'Naam' }, { key: 'code', label: 'Code' },
     { key: 'country', label: 'Land' }, { key: 'currency', label: 'Valuta' },
     { key: 'importFactor', label: 'Import factor' }, { key: 'currencyFactor', label: 'FX factor' },
     { key: 'comFee', label: 'Com. Fee' }, { key: 'samplingFOB', label: 'Sample FOB' },
     { key: 'notes', label: 'Notes' }
-  ], 'brunotti_leveranciers');
-}
-
-function exportColoursCSV() {
-  exportGenericCSV(masterData.colours, [
+  ],
+  colours: [
     { key: 'code', label: 'Code' }, { key: 'name', label: 'Naam' },
     { key: 'pantone', label: 'Pantone' }, { key: 'fedas', label: 'Fedas' }
-  ], 'brunotti_kleuren');
-}
-
-function exportFabricsCSV() {
-  exportGenericCSV(masterData.fabrics, [
+  ],
+  fabrics: [
     { key: 'quality', label: 'Kwaliteit' }, { key: 'composition', label: 'Samenstelling' },
     { key: 'weight', label: 'Gewicht' }, { key: 'supplier', label: 'Leverancier' },
     { key: 'fabricCode', label: 'Fabric Code' }, { key: 'type', label: 'Type' },
     { key: 'remark', label: 'Opmerking' }
-  ], 'brunotti_stoffen');
-}
-
-function exportHsCodesCSV() {
-  exportGenericCSV(masterData.hsCodes, [
+  ],
+  hsCodes: [
     { key: 'code', label: 'HS Code' }, { key: 'descNL', label: 'NL omschrijving' },
     { key: 'descEN', label: 'EN omschrijving' }, { key: 'category', label: 'Categorie' },
     { key: 'weight', label: 'Gewicht (kg)' }
-  ], 'brunotti_hscodes');
+  ],
+  fits: [
+    { key: 'no', label: 'Nummer' }, { key: 'name', label: 'Naam' }
+  ]
+};
+
+function exportVendorsCSV() {
+  exportGenericCSV(masterData.vendors, STAMDATA_COLUMNS.vendors, 'brunotti_leveranciers');
+}
+
+function exportColoursCSV() {
+  exportGenericCSV(masterData.colours, STAMDATA_COLUMNS.colours, 'brunotti_kleuren');
+}
+
+function exportFabricsCSV() {
+  exportGenericCSV(masterData.fabrics, STAMDATA_COLUMNS.fabrics, 'brunotti_stoffen');
+}
+
+function exportHsCodesCSV() {
+  exportGenericCSV(masterData.hsCodes, STAMDATA_COLUMNS.hsCodes, 'brunotti_hscodes');
 }
 
 function exportFitsCSV() {
-  exportGenericCSV(masterData.fits, [
-    { key: 'no', label: 'Nummer' }, { key: 'name', label: 'Naam' }
-  ], 'brunotti_pasvorm');
+  exportGenericCSV(masterData.fits, STAMDATA_COLUMNS.fits, 'brunotti_pasvorm');
 }
 
 
@@ -3482,6 +3503,10 @@ async function downloadZip() {
       },
       entries: entries,
       vendors: masterData.vendors,
+      colours: masterData.colours,
+      fabrics: masterData.fabrics,
+      hsCodes: masterData.hsCodes,
+      fits: masterData.fits,
       versions: versions_saved.slice(0, 5), // laatste 5 versies meenemen
     };
 
@@ -3509,6 +3534,19 @@ async function downloadZip() {
     const csv = '\uFEFF' + [headers.map(h=>`"${h}"`).join(','), ...rows].join('\n');
     zip.file(`brunotti_ss27_entries_v${vNum}_${dateStr}.csv`, csv);
 
+    // 3b. Stamdata als aparte CSV's — dezelfde kolomdefinities als de
+    // losse export-knoppen in de Stamdata tab, zodat ze nooit uit elkaar lopen.
+    zip.file(`brunotti_leveranciers_v${vNum}_${dateStr}.csv`,
+      buildCSVString(masterData.vendors, STAMDATA_COLUMNS.vendors));
+    zip.file(`brunotti_kleuren_v${vNum}_${dateStr}.csv`,
+      buildCSVString(masterData.colours, STAMDATA_COLUMNS.colours));
+    zip.file(`brunotti_stoffen_v${vNum}_${dateStr}.csv`,
+      buildCSVString(masterData.fabrics, STAMDATA_COLUMNS.fabrics));
+    zip.file(`brunotti_hscodes_v${vNum}_${dateStr}.csv`,
+      buildCSVString(masterData.hsCodes, STAMDATA_COLUMNS.hsCodes));
+    zip.file(`brunotti_pasvorm_v${vNum}_${dateStr}.csv`,
+      buildCSVString(masterData.fits, STAMDATA_COLUMNS.fits));
+
     // 4. README met versieinfo
     const readme = `BRUNOTTI SS27 PRODUCT DATA — v${vNum}
 Datum: ${now.toLocaleDateString('nl-NL', {day:'2-digit',month:'2-digit',year:'numeric'})}
@@ -3517,7 +3555,12 @@ Seizoen: SS27
 Inhoud van dit archief:
 - brunotti_ss27_app_v${vNum}_${dateStr}.html    → De volledige app (open in browser)
 - brunotti_ss27_data_v${vNum}_${dateStr}.json   → Alle data als JSON (backup/import)
-- brunotti_ss27_entries_v${vNum}_${dateStr}.csv → Alle entries als CSV (voor Excel/Shopify)
+- brunotti_ss27_entries_v${vNum}_${dateStr}.csv → Alle artikelen als CSV (voor Excel/Shopify)
+- brunotti_leveranciers_v${vNum}_${dateStr}.csv → Leveranciers-stamdata als CSV
+- brunotti_kleuren_v${vNum}_${dateStr}.csv      → Kleuren-stamdata als CSV
+- brunotti_stoffen_v${vNum}_${dateStr}.csv      → Stoffen-stamdata als CSV
+- brunotti_hscodes_v${vNum}_${dateStr}.csv      → HS codes-stamdata als CSV
+- brunotti_pasvorm_v${vNum}_${dateStr}.csv      → Pasvorm-stamdata als CSV
 
 Statistieken:
 - Totaal artikelen:  ${entries.length}
@@ -3525,6 +3568,9 @@ Statistieken:
 - Marge ≥ 42%:       ${entries.filter(e=>e.actualMargin>=0.42).length}
 - Marge < 37%:       ${entries.filter(e=>e.actualMargin!==null&&e.actualMargin<0.37).length}
 - Leveranciers:      ${masterData.vendors.length}
+- Kleuren:           ${masterData.colours.length}
+- Stoffen:           ${masterData.fabrics.length}
+- HS codes:          ${masterData.hsCodes.length}
 
 Archivering: sla dit zip-bestand op in SharePoint onder:
 Brunotti SS27 App / Archief / ${dateStr}/
@@ -3905,10 +3951,26 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
+    version: '1.8',
+    date: '2026-07-05',
+    author: 'Martijn Cornelissen',
+    active: true,
+    features: [
+      { name: 'Header verder opgeschoond', desc: '"Opslaan" ook verwijderd uit de bovenbalk — artikelen opslaan gebeurt voortaan alleen via de eigen "Valideer & Opslaan"-knop in de Invoer tab (met validatie, dus veiliger dan de oude header-knop)', tab: null, icon: '🧹' },
+      { name: 'Volledige export (ZIP)', desc: 'Nieuwe knop in Versies tab: bundelt de app, alle artikelen én alle stamdata-categorieën (leveranciers, kleuren, stoffen, HS codes, pasvorm) als aparte CSV\u2019s plus JSON-backup in één ZIP', tab: 'versies', icon: '⬇' },
+      { name: 'Synchroniseren verduidelijkt', desc: 'Knoppen hernoemd naar "Synchroniseren met team" / "Ophalen van team" zodat duidelijk is dat dit gedeeld is, niet privé', tab: 'versies', icon: '🔄' },
+      { name: 'Conflict-detectie bij synchroniseren', desc: 'Waarschuwt vóóraf als er een nieuwere teamversie klaarstaat (voorkomt dat je andermans werk overschrijft), en andersom als jijzelf nog niet-gesynchroniseerde wijzigingen hebt', tab: 'versies', icon: '🛡️' },
+      { name: 'Bugfix: onbetrouwbare tijdstip-vergelijking', desc: 'De "nieuwste versie wint"-logica gebruikte per ongeluk parseInt() op een datumtekst, waardoor de cloud-versie bijna altijd als nieuwer werd gezien — nu een echte datumvergelijking', tab: 'versies', icon: '🔧' },
+      { name: 'Eén bron van waarheid voor versienummer', desc: 'Versienummer wordt nu overal (header, sync-payload) automatisch uit de changelog gehaald in plaats van los hardcoded te staan', tab: null, icon: '🔧' },
+      { name: 'Werkende Google Sheet-link', desc: 'Nieuwe knop "Open live Google Sheet" in Instellingen — voorheen wel aanwezig in de code maar zonder werkend element in het scherm', tab: 'versies', icon: '📊' },
+      { name: 'Google Sheet volledig herzien', desc: 'Aparte tabbladen voor Leveranciers, Kleuren, Stoffen, HS Codes en Pasvorm, plus een "Log"-tab die bij elke synchronisatie een leesbare regel toevoegt (wie, wanneer, aantallen). Puntherstel kan via Sheets\u2019 eigen ingebouwde versiegeschiedenis', tab: 'versies', icon: '📊' },
+    ]
+  },
+  {
     version: '1.7',
     date: '2026-07-04',
     author: 'Martijn Cornelissen',
-    active: true,
+    active: false,
     features: [
       { name: 'Header opgeschoond', desc: 'Onduidelijke knoppen "Excel data" (reset) en "Export CSV" verwijderd uit de bovenbalk — alleen "Opslaan" blijft staan', tab: null, icon: '🧹' },
       { name: 'Export per stamdata-categorie', desc: 'Elke stamdata-subtab (Leveranciers, Kleuren, Stoffen, HS Codes, Pasvorm) heeft nu een eigen Export CSV-knop', tab: 'stamdata', icon: '⬇' },
@@ -4016,6 +4078,12 @@ const APP_CHANGELOG = [
     ]
   },
 ];
+
+// Eén bron van waarheid voor het versienummer — wordt gebruikt in de
+// header, de sync-payload en overal elders. Voorkomt dat deze plekken
+// uit elkaar lopen (zoals eerder gebeurde: sync stuurde nog '1.5' door
+// terwijl de app al bij v1.7 was).
+const APP_VERSION = APP_CHANGELOG.find(v => v.active).version;
 
 function renderChangelog() {
   const el = document.getElementById('changelogList');
@@ -4376,22 +4444,92 @@ function setSyncStatus(state, label) {
   lbl.textContent = label || '';
 }
 
-async function syncToSharePoint() {
-  if (!APPS_SCRIPT_URL) { showGasConfig(); return; }
-  setSyncStatus('syncing', 'Opslaan...');
+// ── Dirty-tracking: heeft deze browser nog niet-gesynchroniseerde
+// lokale wijzigingen? Vergelijkt huidige data met de laatst bekende
+// gesynchroniseerde snapshot. Voorkomt dat een auto-load stilletjes
+// iemands niet-opgeslagen werk overschrijft. ──
+function markSynced() {
+  localStorage.setItem('brunotti_ss27_syncedSnapshot', JSON.stringify({ entries, masterData }));
+}
+function hasUnsyncedChanges() {
+  var snap = localStorage.getItem('brunotti_ss27_syncedSnapshot');
+  if (!snap) return entries.length > 0; // nog nooit gesynchroniseerd, maar wel al data
+  try {
+    return snap !== JSON.stringify({ entries, masterData });
+  } catch (e) {
+    return false;
+  }
+}
 
-  var payload = {
-    action: 'save',
-    payload: {
-      savedAt:    new Date().toISOString(),
-      savedBy:    localStorage.getItem('brunotti_ss27_user') || 'onbekend',
-      version:    '1.5',
-      entries:    entries,
-      masterData: masterData,
-    }
-  };
+async function syncToSharePoint(force) {
+  if (!APPS_SCRIPT_URL) { showGasConfig(); return; }
+
+  var saveBtn = document.getElementById('syncSaveBtn');
+  var loadBtn = document.getElementById('syncLoadBtn');
+  if (saveBtn) saveBtn.disabled = true;
+  if (loadBtn) loadBtn.disabled = true;
 
   try {
+    // ── Conflict-check: is er sinds onze laatste keer laden een
+    // nieuwere versie op Drive gezet door iemand anders? Zo ja, dan
+    // zou een blinde push die wijzigingen stilletjes overschrijven. ──
+    if (!force) {
+      setSyncStatus('syncing', 'Controleren op wijzigingen...');
+      try {
+        var checkRes = await fetch(APPS_SCRIPT_URL + '?action=load', { method: 'GET' });
+        var checkData = await checkRes.json();
+        if (checkData.status === 'ok' && checkData.savedAt) {
+          var cloudTime = new Date(checkData.savedAt).getTime();
+          var localTime = new Date(localStorage.getItem('brunotti_ss27_lastSync') || 0).getTime();
+          if (!isNaN(cloudTime) && (isNaN(localTime) || cloudTime > localTime)) {
+            var who = checkData.savedBy || 'iemand anders';
+            var when = new Date(checkData.savedAt).toLocaleString('nl-NL');
+            var proceed = confirm(
+              '⚠️ Let op: er staat een nieuwere versie op Google Drive.\n\n' +
+              'Opgeslagen door: ' + who + '\n' +
+              'Op: ' + when + '\n' +
+              '(' + (checkData.entries ? checkData.entries.length : '?') + ' entries)\n\n' +
+              'Als je nu synchroniseert, overschrijf je die versie met jouw lokale data.\n\n' +
+              'Klik OK om eerst die nieuwere versie op te halen (jouw ongesynchroniseerde wijzigingen blijven lokaal bewaard), of Annuleren om het te laten zoals het is.'
+            );
+            setSyncStatus('online', 'Google Drive');
+            if (saveBtn) saveBtn.disabled = false;
+            if (loadBtn) loadBtn.disabled = false;
+            if (proceed) {
+              await loadFromSharePoint(false);
+            } else {
+              showToast('ℹ Synchronisatie geannuleerd — niets is overschreven');
+            }
+            return;
+          }
+        }
+      } catch (checkErr) {
+        // Kon niet checken (bijv. offline) — laat gebruiker zelf beslissen
+        // of ze willen doorgaan zonder de conflict-check.
+        var proceedAnyway = confirm('Kon niet controleren op een nieuwere versie (' + checkErr.message + ').\n\nToch doorgaan met synchroniseren?');
+        if (!proceedAnyway) {
+          setSyncStatus('online', 'Google Drive');
+          if (saveBtn) saveBtn.disabled = false;
+          if (loadBtn) loadBtn.disabled = false;
+          showToast('ℹ Synchronisatie geannuleerd');
+          return;
+        }
+      }
+    }
+
+    setSyncStatus('syncing', 'Opslaan...');
+
+    var payload = {
+      action: 'save',
+      payload: {
+        savedAt:    new Date().toISOString(),
+        savedBy:    localStorage.getItem('brunotti_ss27_user') || 'onbekend',
+        version:    APP_VERSION,
+        entries:    entries,
+        masterData: masterData,
+      }
+    };
+
     var res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify(payload),
@@ -4400,8 +4538,9 @@ async function syncToSharePoint() {
     var data = await res.json();
     if (data.status === 'ok') {
       setSyncStatus('online', 'Opgeslagen — ' + new Date().toLocaleTimeString('nl-NL'));
-      showToast('✓ ' + (data.entries||entries.length) + ' entries opgeslagen naar Google Drive');
+      showToast('✓ ' + (data.entries||entries.length) + ' entries gesynchroniseerd met team');
       localStorage.setItem('brunotti_ss27_lastSync', new Date().toISOString());
+      markSynced();
       if (data.sheetUrl) {
         localStorage.setItem('brunotti_ss27_sheetUrl', data.sheetUrl);
         updateSheetButton(data.sheetUrl);
@@ -4412,6 +4551,9 @@ async function syncToSharePoint() {
   } catch(err) {
     setSyncStatus('error', 'Opslaan mislukt');
     showToast('\u2717 Opslaan mislukt: ' + err.message);
+  } finally {
+    if (saveBtn) saveBtn.disabled = false;
+    if (loadBtn) loadBtn.disabled = false;
   }
 }
 
@@ -4435,13 +4577,39 @@ async function loadFromSharePoint(silent) {
     }
     if (data.entries && Array.isArray(data.entries)) {
       var spTime    = new Date(data.savedAt).getTime();
-      var localTime = parseInt(localStorage.getItem('brunotti_ss27_lastSync') || '0');
+      var localTime = new Date(localStorage.getItem('brunotti_ss27_lastSync') || 0).getTime();
 
       if (isNaN(localTime) || spTime > localTime) {
+        // Er is een nieuwere teamversie. Voordat we die klakkeloos over
+        // onze lokale data heen zetten: hebben wij zelf nog wijzigingen
+        // die nog niet gesynchroniseerd zijn?
+        if (hasUnsyncedChanges()) {
+          if (silent) {
+            // Niet automatisch overschrijven bij opstarten — lokale
+            // wijzigingen blijven veilig staan totdat gebruiker kiest.
+            setSyncStatus('online', 'Nieuwere teamversie beschikbaar');
+            showToast('⚠ Nieuwere teamversie beschikbaar, maar jij hebt niet-gesynchroniseerde lokale wijzigingen. Synchroniseer eerst, of klik "Ophalen van team" om je lokale wijzigingen te verwijderen.');
+            return;
+          }
+          var overwrite = confirm(
+            '⚠️ Let op: je hebt zelf niet-gesynchroniseerde lokale wijzigingen.\n\n' +
+            'Als je nu ophaalt, gaan die lokale wijzigingen verloren en worden ze ' +
+            'vervangen door de teamversie van ' + (data.savedBy || '?') + ' (' + new Date(data.savedAt).toLocaleString('nl-NL') + ').\n\n' +
+            'Weet je zeker dat je door wilt gaan?'
+          );
+          if (!overwrite) {
+            showToast('ℹ Ophalen geannuleerd — jouw lokale wijzigingen zijn behouden');
+            setSyncStatus('online', 'Google Drive');
+            return;
+          }
+        }
+
         entries    = data.entries;
         if (data.masterData) masterData = data.masterData;
         localStorage.setItem('brunotti_ss27_entries', JSON.stringify(entries));
         localStorage.setItem('brunotti_ss27_master',  JSON.stringify(masterData));
+        localStorage.setItem('brunotti_ss27_lastSync', data.savedAt);
+        markSynced();
         filteredEntries = [...entries];
         updateOverview();
         setSyncStatus('online', (data.savedBy || 'Google Drive') + ' \u00b7 ' + new Date(data.savedAt).toLocaleTimeString('nl-NL'));
@@ -4463,13 +4631,13 @@ function updateSheetButton(url) {
   var btn = document.getElementById('openSheetBtn');
   if (btn) {
     btn.href = url;
-    btn.style.display = '';
+    btn.style.display = 'inline-flex';
   }
-  // Update knop in header
+  // Update knop in header (indien aanwezig)
   var hBtn = document.getElementById('openSheetBtnHeader');
   if (hBtn) {
     hBtn.href = url;
-    hBtn.style.display = '';
+    hBtn.style.display = 'inline-flex';
   }
 }
 
