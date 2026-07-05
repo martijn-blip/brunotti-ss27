@@ -448,14 +448,48 @@
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     Terug
   </button>
+  <button class="btn btn-ghost btn-sm" onclick="openHelpModal()" title="Hoe werkt deze app?" style="margin-left:auto">❓ Hoe werkt dit?</button>
 </header>
+
+<div id="helpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:250;align-items:center;justify-content:center">
+  <div style="background:var(--white);border-radius:10px;padding:24px;min-width:480px;max-width:640px;width:90vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="font-size:16px;font-weight:700">👋 Hoe werkt deze app?</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeHelpModal()">✕</button>
+    </div>
+
+    <div style="font-size:13px;line-height:1.6;color:var(--ink-mid)">
+      <p style="margin-bottom:14px">Deze app vervangt het oude, grote Excel-bestand. Alle data staat centraal en wordt gedeeld met het team via Google Sheets. Hieronder een kort overzicht van de tabs en hoe samenwerken werkt.</p>
+
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+        <div style="display:flex;gap:10px"><span style="font-size:18px">📂</span><div><b>Stamdata</b> — je basisgegevens: leveranciers, kleuren, stoffen, HS codes en pasvormen. Dit is de bron waar Invoer op leunt, dus houd dit up-to-date om typefouten elders te voorkomen.</div></div>
+        <div style="display:flex;gap:10px"><span style="font-size:18px">📝</span><div><b>Invoer</b> — hier voeg je een nieuw artikel toe of bewerk je een bestaand artikel. Marges worden automatisch live berekend. Klik altijd op <b>"✓ Valideer &amp; Opslaan"</b> om het echt op te slaan — dat controleert eerst op ontbrekende of foute velden.</div></div>
+        <div style="display:flex;gap:10px"><span style="font-size:18px">🔍</span><div><b>Kwaliteit</b> — geeft automatisch een overzicht van artikelen met ontbrekende of inconsistente data, zodat fouten opvallen vóórdat ze een probleem worden.</div></div>
+        <div style="display:flex;gap:10px"><span style="font-size:18px">📋</span><div><b>Overzicht</b> — het totaaloverzicht van alle artikelen, met filters en export naar CSV.</div></div>
+        <div style="display:flex;gap:10px"><span style="font-size:18px">⚙</span><div><b>Instellingen</b> — synchroniseren met het team, back-ups, versiegeschiedenis, changelog en deze handleiding, nu allemaal netjes in eigen tabbladen.</div></div>
+      </div>
+
+      <hr class="divider" style="margin:14px 0">
+
+      <div style="font-weight:700;margin-bottom:8px">🔄 Samenwerken: hoe zit het met synchroniseren?</div>
+      <ul style="margin:0 0 4px 18px;padding:0">
+        <li style="margin-bottom:6px"><b>Synchroniseren met team</b> stuurt jouw wijzigingen naar de gedeelde Google Sheet, zodat iedereen dezelfde data ziet.</li>
+        <li style="margin-bottom:6px"><b>Ophalen van team</b> haalt de laatste teamversie op naar jouw scherm.</li>
+        <li style="margin-bottom:6px">Bij het openen van de app wordt automatisch gecheckt of er een nieuwere teamversie is, en die wordt dan opgehaald.</li>
+        <li style="margin-bottom:6px">Werk je liever eerst rustig lokaal door, synchroniseer dan zodra je klaar bent — de app waarschuwt je als er ondertussen door iemand anders is gesynchroniseerd, zodat niemands werk verloren gaat.</li>
+      </ul>
+
+      <p style="margin-top:14px;font-size:12px;color:var(--ink-low)">Deze uitleg is op elk moment opnieuw op te roepen via de "❓ Hoe werkt dit?"-knop rechtsboven.</p>
+    </div>
+  </div>
+</div>
 
 <div class="tabs">
   <div class="tab active" onclick="switchTab('stamdata')">📂 Stamdata</div>
   <div class="tab" onclick="switchTab('invoer')">📝 Invoer</div>
   <div class="tab" onclick="switchTab('controle')">🔍 Kwaliteit</div>
   <div class="tab" onclick="switchTab('overzicht')">📋 Overzicht</div>
-  <div class="tab" onclick="switchTab('versies')">🕐 Versies</div>
+  <div class="tab" onclick="switchTab('versies')">⚙ Instellingen</div>
 </div>
 
 <!-- ══ TAB: INVOER ══════════════════════════════════════════ -->
@@ -521,7 +555,8 @@
       </div>
       <div class="field col-span-2">
         <label>Kwaliteit / Stof</label>
-        <input type="text" id="f_quality" placeholder="bv. Recycled Ocean Polyester - Repreve - 4 Way Stretch" oninput="liveValidate()">
+        <input type="text" id="f_quality" list="qualityDatalist" placeholder="bv. Recycled Ocean Polyester - Repreve - 4 Way Stretch" oninput="liveValidate()">
+        <datalist id="qualityDatalist"></datalist>
         <div class="field-hint" id="hint_quality"></div>
       </div>
     </div>
@@ -535,13 +570,15 @@
       </div>
       <div class="field">
         <label>Kleur Nummer <span class="req">*</span></label>
-        <input type="text" id="f_colourNumber" placeholder="bv. 6544" oninput="liveValidate()">
+        <input type="text" id="f_colourNumber" list="colourNumberDatalist" placeholder="bv. 6544" oninput="onColourNumberInput()">
+        <datalist id="colourNumberDatalist"></datalist>
         <div class="field-hint" id="hint_colourNumber"></div>
         <span class="field-error hidden" id="err_colourNumber"></span>
       </div>
       <div class="field col-span-2">
         <label>Kleur Naam <span class="req">*</span></label>
-        <input type="text" id="f_colourName" placeholder="bv. Oil Green" oninput="liveValidate()">
+        <input type="text" id="f_colourName" list="colourNameDatalist" placeholder="bv. Oil Green" oninput="liveValidate()">
+        <datalist id="colourNameDatalist"></datalist>
         <div class="field-hint" id="hint_colourName"></div>
         <span class="field-error hidden" id="err_colourName"></span>
       </div>
@@ -614,6 +651,11 @@
       <div class="field">
         <label>Last Purchase Price</label>
         <input type="number" id="f_lastPurchasePrice" placeholder="0.00" step="0.01" oninput="recalculate()">
+      </div>
+      <div class="field">
+        <label>MOQ (min. bestelhoeveelheid)</label>
+        <input type="number" id="f_moq" placeholder="bv. 500" min="0">
+        <div class="field-hint" id="hint_moq"></div>
       </div>
 
       <div class="field">
@@ -771,6 +813,7 @@
           <option value="missing_fob">❌ Geen FOB prijs</option>
           <option value="missing_quality">❌ Geen kwaliteit</option>
           <option value="missing_segment">⚠ Geen segment</option>
+          <option value="missing_moq">⚠ Geen MOQ</option>
           <option value="missing_any">⚠ Enige data ontbreekt</option>
         </optgroup>
       </select>
@@ -989,65 +1032,60 @@
 <!-- ══ TAB: VERSIES ═════════════════════════════════════════ -->
 <div id="tab-versies" class="main hidden">
 
-  <div class="card" style="margin-bottom:16px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div>
-        <div style="font-size:15px;font-weight:700;margin-bottom:2px">Versiegeschiedenis</div>
-        <div style="font-size:12px;color:var(--ink-mid)">Elke opgeslagen versie bevat een volledige snapshot van alle artikelen en stamdata. Max 20 versies — daarna wordt de oudste automatisch verwijderd.</div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
-          <label style="font-size:11px;font-weight:700;color:var(--ink-mid);white-space:nowrap">👤 Jouw naam:</label>
-          <input type="text" id="currentUserName" placeholder="bv. Martijn" style="max-width:180px;font-size:12px" oninput="localStorage.setItem('brunotti_ss27_user',this.value)">
-          <span style="font-size:10px;color:var(--ink-low)">Wordt opgeslagen bij snapshots</span>
-        </div>
+  <!-- Sub-tab bar -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+    <button class="btn btn-primary btn-sm inst-tab active" onclick="setInstTab('sync')" id="itab-sync">⚙ Sync &amp; Instellingen</button>
+    <button class="btn btn-ghost btn-sm inst-tab" onclick="setInstTab('versies')" id="itab-versies">🕐 Versiegeschiedenis</button>
+    <button class="btn btn-ghost btn-sm inst-tab" onclick="setInstTab('changelog')" id="itab-changelog">📋 Changelog</button>
+    <button class="btn btn-ghost btn-sm inst-tab" onclick="setInstTab('handleiding')" id="itab-handleiding">❓ Handleiding</button>
+  </div>
 
-        <!-- Google Drive koppeling -->
-        <div style="margin-top:14px;padding:14px;background:var(--fill);border-radius:var(--radius);border:1px solid var(--border)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-            <div style="font-size:12px;font-weight:700">☁ Google Drive sync</div>
-            <div id="gasStatus" style="font-size:11px;color:var(--teal);font-weight:600">✓ Verbonden</div>
-          </div>
+  <!-- ── Sub-tab: Sync & Instellingen ─────────────────────────── -->
+  <div id="inst-sync" class="card" style="margin-bottom:16px">
+    <div style="font-size:15px;font-weight:700;margin-bottom:2px">Synchronisatie-instellingen</div>
+    <div style="font-size:12px;color:var(--ink-mid);margin-bottom:14px">Koppeling met de gedeelde Google Sheet, zodat het hele team met dezelfde data werkt.</div>
 
-          <!-- Google account -->
-          <div style="display:grid;grid-template-columns:140px 1fr;gap:8px;align-items:center;margin-bottom:8px">
-            <label style="font-size:11px;font-weight:700;color:var(--ink-mid)">Google account</label>
-            <input type="text" id="gasAccountInput"
-              placeholder="bv. brunotti.ss27@gmail.com"
-              value=""
-              style="font-size:11px"
-              oninput="localStorage.setItem('brunotti_gas_account',this.value)">
-          </div>
-
-          <!-- Apps Script URL -->
-          <div style="display:grid;grid-template-columns:140px 1fr;gap:8px;align-items:center;margin-bottom:12px">
-            <label style="font-size:11px;font-weight:700;color:var(--ink-mid)">Apps Script URL</label>
-            <input type="text" id="gasUrlInput"
-              placeholder="https://script.google.com/macros/s/..."
-              value=""
-              style="font-size:11px;font-family:monospace"
-              oninput="localStorage.setItem('brunotti_gas_url',this.value);APPS_SCRIPT_URL=this.value">
-          </div>
-
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <button class="btn btn-primary btn-sm" onclick="saveGasSettings()">Opslaan instellingen</button>
-            <button class="btn btn-primary btn-sm" id="syncSaveBtn" onclick="syncToSharePoint()">🔄 Synchroniseren met team</button>
-            <button class="btn btn-ghost btn-sm" id="syncLoadBtn" onclick="loadFromSharePoint(false)">⬇ Ophalen van team</button>
-          </div>
-          <div id="gasStatusDetail" style="margin-top:8px;font-size:10px;color:var(--ink-low)"></div>
-          <a id="openSheetBtn" href="#" target="_blank" rel="noopener"
-             style="display:none;margin-top:12px;align-items:center;gap:6px;padding:10px 14px;background:#0f9d58;color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;width:fit-content">
-            📊 Open live Google Sheet — alle data &amp; stamdata
-          </a>
-        </div>
+    <!-- Google Drive koppeling -->
+    <div style="padding:14px;background:var(--fill);border-radius:var(--radius);border:1px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:12px;font-weight:700">☁ Google Drive sync</div>
+        <div id="gasStatus" style="font-size:11px;color:var(--teal);font-weight:600">✓ Verbonden</div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-ghost" onclick="exportAllVersions()">⬇ Export alle versies</button>
-        <button class="btn btn-ghost" id="zipBtn" onclick="downloadZip()">⬇ Download volledige export (ZIP)</button>
-        <button class="btn btn-success" onclick="saveManualSnapshot()">📸 Snapshot opslaan</button>
+
+      <!-- Google account -->
+      <div style="display:grid;grid-template-columns:140px 1fr;gap:8px;align-items:center;margin-bottom:8px">
+        <label style="font-size:11px;font-weight:700;color:var(--ink-mid)">Google account</label>
+        <input type="text" id="gasAccountInput"
+          placeholder="bv. brunotti.ss27@gmail.com"
+          value=""
+          style="font-size:11px"
+          oninput="localStorage.setItem('brunotti_gas_account',this.value)">
       </div>
+
+      <!-- Apps Script URL -->
+      <div style="display:grid;grid-template-columns:140px 1fr;gap:8px;align-items:center;margin-bottom:12px">
+        <label style="font-size:11px;font-weight:700;color:var(--ink-mid)">Apps Script URL</label>
+        <input type="text" id="gasUrlInput"
+          placeholder="https://script.google.com/macros/s/..."
+          value=""
+          style="font-size:11px;font-family:monospace"
+          oninput="localStorage.setItem('brunotti_gas_url',this.value);APPS_SCRIPT_URL=this.value">
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-primary btn-sm" onclick="saveGasSettings()">Opslaan instellingen</button>
+        <button class="btn btn-primary btn-sm" id="syncSaveBtn" onclick="syncToSharePoint()">🔄 Synchroniseren met team</button>
+        <button class="btn btn-ghost btn-sm" id="syncLoadBtn" onclick="loadFromSharePoint(false)">⬇ Ophalen van team</button>
+      </div>
+      <div id="gasStatusDetail" style="margin-top:8px;font-size:10px;color:var(--ink-low)"></div>
+      <a id="openSheetBtn" href="#" target="_blank" rel="noopener"
+         style="display:none;margin-top:12px;align-items:center;gap:6px;padding:10px 14px;background:#0f9d58;color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;width:fit-content">
+        📊 Open live Google Sheet — alle data &amp; stamdata
+      </a>
     </div>
 
     <!-- Storage usage bar -->
-    <div style="margin-bottom:16px;padding:12px;background:var(--fill);border-radius:var(--radius)">
+    <div style="margin-top:16px;margin-bottom:16px;padding:12px;background:var(--fill);border-radius:var(--radius)">
       <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-mid);margin-bottom:6px">
         <span style="font-weight:600">Browser-opslag gebruikt</span>
         <span id="storageUsedLabel">—</span>
@@ -1061,7 +1099,7 @@
     </div>
 
     <!-- Auto-save settings -->
-    <div style="display:flex;gap:16px;align-items:center;padding:12px;background:var(--blue-l);border-radius:var(--radius);margin-bottom:16px;flex-wrap:wrap">
+    <div style="display:flex;gap:16px;align-items:center;padding:12px;background:var(--blue-l);border-radius:var(--radius);flex-wrap:wrap">
       <div style="font-size:13px;font-weight:600;color:var(--blue)">⚙ Auto-opslaan</div>
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
         <input type="checkbox" id="autoSaveEnabled" onchange="toggleAutoSave()" style="width:auto">
@@ -1075,22 +1113,74 @@
     </div>
   </div>
 
-  <!-- Comparison panel (shown when comparing versions) -->
-  <div id="comparePanel" class="card hidden" style="margin-bottom:16px;border-color:var(--amber)">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div style="font-size:13px;font-weight:600;color:var(--amber)">🔍 Versievergelijking</div>
-      <button class="btn btn-ghost btn-sm" onclick="closeCompare()">✕ Sluiten</button>
+  <!-- ── Sub-tab: Versiegeschiedenis ───────────────────────────── -->
+  <div id="inst-versies" class="hidden">
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:15px;font-weight:700;margin-bottom:2px">Versiegeschiedenis</div>
+          <div style="font-size:12px;color:var(--ink-mid)">Elke opgeslagen versie bevat een volledige snapshot van alle artikelen en stamdata. Max 20 versies — daarna wordt de oudste automatisch verwijderd.</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+            <label style="font-size:11px;font-weight:700;color:var(--ink-mid);white-space:nowrap">👤 Jouw naam:</label>
+            <input type="text" id="currentUserName" placeholder="bv. Martijn" style="max-width:180px;font-size:12px" oninput="localStorage.setItem('brunotti_ss27_user',this.value)">
+            <span style="font-size:10px;color:var(--ink-low)">Wordt opgeslagen bij snapshots</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost" onclick="exportAllVersions()">⬇ Export alle versies</button>
+          <button class="btn btn-ghost" id="zipBtn" onclick="downloadZip()">⬇ Download volledige export (ZIP)</button>
+          <button class="btn btn-success" onclick="saveManualSnapshot()">📸 Snapshot opslaan</button>
+        </div>
+      </div>
     </div>
-    <div id="compareDiff"></div>
+
+    <!-- Comparison panel (shown when comparing versions) -->
+    <div id="comparePanel" class="card hidden" style="margin-bottom:16px;border-color:var(--amber)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:600;color:var(--amber)">🔍 Versievergelijking</div>
+        <button class="btn btn-ghost btn-sm" onclick="closeCompare()">✕ Sluiten</button>
+      </div>
+      <div id="compareDiff"></div>
+    </div>
+
+    <!-- Version list -->
+    <div id="versionList"></div>
   </div>
 
-  <!-- Version list -->
-  <div id="versionList"></div>
+  <!-- ── Sub-tab: Changelog ────────────────────────────────────── -->
+  <div id="inst-changelog" class="hidden">
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">📋 App changelog — functionaliteit per versie</div>
+      <div id="changelogList"></div>
+    </div>
+  </div>
 
-  <!-- ── App Changelog ─────────────────────────────────────── -->
-  <div class="card" style="margin-top:16px">
-    <div style="font-size:13px;font-weight:700;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">📋 App changelog — functionaliteit per versie</div>
-    <div id="changelogList"></div>
+  <!-- ── Sub-tab: Handleiding ──────────────────────────────────── -->
+  <div id="inst-handleiding" class="hidden">
+    <div class="card">
+      <div style="font-size:15px;font-weight:700;margin-bottom:14px">👋 Hoe werkt deze app?</div>
+      <div style="font-size:13px;line-height:1.6;color:var(--ink-mid)">
+        <p style="margin-bottom:14px">Deze app vervangt het oude, grote Excel-bestand. Alle data staat centraal en wordt gedeeld met het team via Google Sheets. Hieronder een kort overzicht van de tabs en hoe samenwerken werkt.</p>
+
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+          <div style="display:flex;gap:10px"><span style="font-size:18px">📂</span><div><b>Stamdata</b> — je basisgegevens: leveranciers, kleuren, stoffen, HS codes en pasvormen. Dit is de bron waar Invoer op leunt, dus houd dit up-to-date om typefouten elders te voorkomen.</div></div>
+          <div style="display:flex;gap:10px"><span style="font-size:18px">📝</span><div><b>Invoer</b> — hier voeg je een nieuw artikel toe of bewerk je een bestaand artikel. Marges worden automatisch live berekend. Klik altijd op <b>"✓ Valideer &amp; Opslaan"</b> om het echt op te slaan — dat controleert eerst op ontbrekende of foute velden.</div></div>
+          <div style="display:flex;gap:10px"><span style="font-size:18px">🔍</span><div><b>Kwaliteit</b> — geeft automatisch een overzicht van artikelen met ontbrekende of inconsistente data, zodat fouten opvallen vóórdat ze een probleem worden.</div></div>
+          <div style="display:flex;gap:10px"><span style="font-size:18px">📋</span><div><b>Overzicht</b> — het totaaloverzicht van alle artikelen, met filters en export naar CSV.</div></div>
+          <div style="display:flex;gap:10px"><span style="font-size:18px">⚙</span><div><b>Instellingen</b> — synchroniseren met het team, back-ups, versiegeschiedenis, changelog en deze handleiding.</div></div>
+        </div>
+
+        <hr class="divider" style="margin:14px 0">
+
+        <div style="font-weight:700;margin-bottom:8px">🔄 Samenwerken: hoe zit het met synchroniseren?</div>
+        <ul style="margin:0 0 4px 18px;padding:0">
+          <li style="margin-bottom:6px"><b>Synchroniseren met team</b> stuurt jouw wijzigingen naar de gedeelde Google Sheet, zodat iedereen dezelfde data ziet.</li>
+          <li style="margin-bottom:6px"><b>Ophalen van team</b> haalt de laatste teamversie op naar jouw scherm.</li>
+          <li style="margin-bottom:6px">Bij het openen van de app wordt automatisch gecheckt of er een nieuwere teamversie is, en die wordt dan opgehaald.</li>
+          <li style="margin-bottom:6px">Werk je liever eerst rustig lokaal door, synchroniseer dan zodra je klaar bent — de app waarschuwt je als er ondertussen door iemand anders is gesynchroniseerd, zodat niemands werk verloren gaat.</li>
+        </ul>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -1336,6 +1426,7 @@ window.onload = () => {
   loadSettings();
   checkDailySnapshot();
   updateStorageUsageBar();
+  populateInvoerDatalists();
   // Start on stamdata tab
   switchTab('stamdata');
   // Init sheet button if URL known
@@ -1711,6 +1802,7 @@ function getFormData() {
     supplierQuote1: n('f_supplierQuote1'),
     supplierQuote2: n('f_supplierQuote2'),
     lastPurchasePrice: n('f_lastPurchasePrice'),
+    moq: n('f_moq'),
     retailEuro: n('f_retailEuro'),
     samplePrice: n('f_samplePrice'),
     sampleQty: n('f_sampleQty'),
@@ -1947,6 +2039,7 @@ function filterTable() {
     if (mf === 'missing_fob'  && e.fobCost) return false;
     if (mf === 'missing_quality' && e.quality) return false;
     if (mf === 'missing_segment' && e.segment) return false;
+    if (mf === 'missing_moq'     && e.moq) return false;
     if (mf === 'missing_any'  && e.fobCost && e.retailEuro && e.colourName && e.quality) return false;
     return true;
   });
@@ -1980,6 +2073,7 @@ function editEntry(i) {
   set('f_supplierQuote1', e.supplierQuote1);
   set('f_supplierQuote2', e.supplierQuote2);
   set('f_lastPurchasePrice', e.lastPurchasePrice);
+  set('f_moq', e.moq);
   set('f_retailEuro', e.retailEuro);
   set('f_samplePrice', e.samplePrice);
   set('f_sampleQty', e.sampleQty);
@@ -2017,6 +2111,7 @@ function renderQualityReport() {
   var noRetail  = pool.filter(function(e){ return !e.retailEuro; }).length;
   var noQuality = pool.filter(function(e){ return !e.quality; }).length;
   var noSegment = pool.filter(function(e){ return !e.segment; }).length;
+  var noMoq     = pool.filter(function(e){ return !e.moq; }).length;
   var lowMargin = pool.filter(function(e){ return e.actualMargin !== null && e.actualMargin < 0.37; }).length;
   var warnMargin= pool.filter(function(e){ return e.actualMargin !== null && e.actualMargin >= 0.37 && e.actualMargin < 0.42; }).length;
   var okMargin  = pool.filter(function(e){ return e.actualMargin >= 0.42; }).length;
@@ -2039,6 +2134,7 @@ function renderQualityReport() {
       + kpiCard(noFob,      'FOB prijs ontbreekt',  'marge', 'missing_fob',     true,  false)
       + kpiCard(noQuality,  'Kwaliteit ontbreekt',  'marge', 'missing_quality', true,  false)
       + kpiCard(noSegment,  'Segment ontbreekt',    'marge', 'missing_segment', false, false)
+      + kpiCard(noMoq,      'MOQ ontbreekt',        'marge', 'missing_moq',     false, false)
       + kpiCard(lowMargin,  'Marge onder 37%',      'marge', 'low',             true,  false)
       + kpiCard(warnMargin, 'Marge 37\u201342%',    'marge', 'warn',            false, false)
       + kpiCard(okMargin,   'Marge \u2265 42%',     null,    null,              false, true)
@@ -2157,11 +2253,11 @@ function renderQualityReport() {
 // ══ EXPORT ═══════════════════════════════════════════════════
 function exportCSVData(data, filename) {
   if (!data.length) { showToast('Geen data om te exporteren'); return; }
-  const headers = ['Style Number','Style Name','Vendor','Collectie Groep','Group','Subgroup','Quality','Segment','Color Seq','Colour Number','Colour Name','FOB Cost','Supplier Quote 1','Last Purchase Price','VVP Euro','Retail Euro','Actual Margin %','Status','Remarks','Saved At'];
+  const headers = ['Style Number','Style Name','Vendor','Collectie Groep','Group','Subgroup','Quality','Segment','Color Seq','Colour Number','Colour Name','FOB Cost','Supplier Quote 1','Last Purchase Price','MOQ','VVP Euro','Retail Euro','Actual Margin %','Status','Remarks','Saved At'];
   const rows = data.map(e => [
     e.styleNumber, e.styleName, e.vendor, e.collectieGroep, e.group, e.subgroup,
     e.quality, e.segment, e.colorSeq, e.colourNumber, e.colourName,
-    e.fobCost, e.supplierQuote1, e.lastPurchasePrice, e.vvpEuro, e.retailEuro,
+    e.fobCost, e.supplierQuote1, e.lastPurchasePrice, e.moq, e.vvpEuro, e.retailEuro,
     e.actualMargin !== null ? (e.actualMargin*100).toFixed(2) : '',
     e.status, e.remarks, e.savedAt
   ].map(v => v === null || v === undefined ? '' : `"${String(v).replace(/"/g,'""')}"`));
@@ -2903,6 +2999,7 @@ function setStamTab(tab) {
 
 function renderStamdata() {
   renderStamdataQualityBanner();
+  populateInvoerDatalists();
   switch (currentStamTab) {
     case 'vendors':  renderVendors();  break;
     case 'colours':  renderColours();  break;
@@ -3429,6 +3526,78 @@ function saveModalEdit() {
   }
 }
 
+// ── Invoer-veld autocomplete/koppeling met Kleuren- en Stoffen-stamdata ──
+// Voorkomt typefouten/inconsistentie doordat je nu kunt kiezen uit wat er
+// al bestaat, in plaats van alles steeds opnieuw te moeten typen.
+function populateInvoerDatalists() {
+  const esc = s => String(s).replace(/"/g, '&quot;');
+
+  const qDl = document.getElementById('qualityDatalist');
+  if (qDl) {
+    const uniqueQualities = [...new Set(masterData.fabrics.map(f => f.quality).filter(Boolean))].sort();
+    qDl.innerHTML = uniqueQualities.map(q => `<option value="${esc(q)}">`).join('');
+  }
+
+  const cnDl = document.getElementById('colourNumberDatalist');
+  if (cnDl) {
+    cnDl.innerHTML = masterData.colours.map(c => `<option value="${esc(c.code)}">${esc(c.code)} — ${esc(c.name)}</option>`).join('');
+  }
+
+  const cnmDl = document.getElementById('colourNameDatalist');
+  if (cnmDl) {
+    const uniqueNames = [...new Set(masterData.colours.map(c => c.name).filter(Boolean))].sort();
+    cnmDl.innerHTML = uniqueNames.map(n => `<option value="${esc(n)}">`).join('');
+  }
+}
+
+// Bij het typen/kiezen van een kleurnummer: als dat exact bestaat in de
+// stamdata, vul dan automatisch de bijbehorende kleurnaam in — net zoals
+// Vendor al land/valuta/etc. automatisch invult.
+function onColourNumberInput() {
+  const cnEl = document.getElementById('f_colourNumber');
+  const cnmEl = document.getElementById('f_colourName');
+  const code = cnEl.value.trim();
+  const match = masterData.colours.find(c => c.code === code);
+  // Alleen overschrijven als het naam-veld leeg is, of nog de vorige
+  // auto-ingevulde waarde bevat — zo raken handmatige aanpassingen nooit kwijt.
+  if (match && cnmEl && (!cnmEl.value || cnmEl.dataset.autofilled === cnmEl.value)) {
+    cnmEl.value = match.name;
+    cnmEl.dataset.autofilled = match.name;
+  }
+  liveValidate();
+}
+
+// ── Help / rondleiding ────────────────────────────────────────
+function openHelpModal() {
+  document.getElementById('helpModal').style.display = 'flex';
+}
+function closeHelpModal() {
+  document.getElementById('helpModal').style.display = 'none';
+}
+document.addEventListener('click', e => {
+  const hm = document.getElementById('helpModal');
+  if (hm && e.target === hm) closeHelpModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeHelpModal();
+});
+
+// ── Instellingen sub-tabs ────────────────────────────────────
+let currentInstTab = 'sync';
+function setInstTab(tab) {
+  currentInstTab = tab;
+  ['sync','versies','changelog','handleiding'].forEach(t => {
+    const panel = document.getElementById('inst-' + t);
+    if (panel) panel.classList.toggle('hidden', t !== tab);
+    const btn = document.getElementById('itab-' + t);
+    if (btn) {
+      btn.classList.toggle('btn-primary', t === tab);
+      btn.classList.toggle('btn-ghost', t !== tab);
+    }
+  });
+  if (tab === 'versies') renderVersions();
+}
+
 function syncVendorDropdowns() {
   ['f_vendor','filterVendor'].forEach(id => {
     const sel = document.getElementById(id);
@@ -3951,10 +4120,22 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
-    version: '1.8',
+    version: '1.9',
     date: '2026-07-05',
     author: 'Martijn Cornelissen',
     active: true,
+    features: [
+      { name: 'Kleur & Kwaliteit gekoppeld aan stamdata', desc: 'Kleur Nummer, Kleur Naam en Kwaliteit/Stof in Invoer tonen nu suggesties uit de stamdata en vullen automatisch aan (zoals Vendor al deed) — met een waarschuwing bij afwijkingen, ter voorkoming van typefouten en inconsistentie', tab: 'invoer', icon: '🎨' },
+      { name: 'Rondleiding toegevoegd', desc: 'Nieuwe "❓ Hoe werkt dit?"-knop in de header legt in het kort alle tabs en de synchronisatie-workflow uit', tab: null, icon: '👋' },
+      { name: '"Versies" hernoemd naar "Instellingen"', desc: 'Overzichtelijk opgedeeld in sub-tabbladen: Sync & Instellingen, Versiegeschiedenis, Changelog en Handleiding', tab: 'versies', icon: '⚙' },
+      { name: 'MOQ per artikel', desc: 'Nieuw veld "MOQ (min. bestelhoeveelheid)" in Invoer, verschilt per stijl/kleur en is niet verplicht. Ontbrekende MOQ wordt gesignaleerd in de Kwaliteit-tab en is meegenomen in CSV- en ZIP-export', tab: 'invoer', icon: '📦' },
+    ]
+  },
+  {
+    version: '1.8',
+    date: '2026-07-05',
+    author: 'Martijn Cornelissen',
+    active: false,
     features: [
       { name: 'Header verder opgeschoond', desc: '"Opslaan" ook verwijderd uit de bovenbalk — artikelen opslaan gebeurt voortaan alleen via de eigen "Valideer & Opslaan"-knop in de Invoer tab (met validatie, dus veiliger dan de oude header-knop)', tab: null, icon: '🧹' },
       { name: 'Volledige export (ZIP)', desc: 'Nieuwe knop in Versies tab: bundelt de app, alle artikelen én alle stamdata-categorieën (leveranciers, kleuren, stoffen, HS codes, pasvorm) als aparte CSV\u2019s plus JSON-backup in één ZIP', tab: 'versies', icon: '⬇' },
@@ -4159,6 +4340,7 @@ function gotoOverzichtWithFilter(filterType, filterValue, vendorName) {
       'missing_fob': 'FOB prijs ontbreekt',
       'missing_quality': 'Kwaliteit ontbreekt',
       'missing_segment': 'Segment ontbreekt',
+      'missing_moq': 'MOQ ontbreekt',
       'missing_any': 'Ontbrekende data',
       'low': 'Marge onder 37%',
       'warn': 'Marge 37-42%',
@@ -4310,19 +4492,33 @@ function liveValidate() {
   setFieldState('f_segment', seg ? 'ok' : (touched.has('f_segment') ? 'warn' : null), seg ? '' : '⚠ Segment aanbevolen (Good/Better/Best)');
 
   var qual = g('f_quality');
-  setFieldState('f_quality', qual ? 'ok' : (touched.has('f_quality') || all ? 'error' : null), qual ? '' : '⚠ Kwaliteit/stof verplicht in te vullen');
+  if (!qual) {
+    setFieldState('f_quality', touched.has('f_quality') || all ? 'error' : null, '⚠ Kwaliteit/stof verplicht in te vullen');
+  } else if (!masterData.fabrics.find(f => f.quality && f.quality.toLowerCase() === qual.toLowerCase())) {
+    setFieldState('f_quality', 'warn', '⚠ Niet gevonden in Stoffen-stamdata — check op typefout of voeg toe in Stamdata');
+  } else {
+    setFieldState('f_quality', 'ok', '');
+  }
 
   var cn = g('f_colourNumber');
   if (!cn) {
     setFieldState('f_colourNumber', touched.has('f_colourNumber') || all ? 'error' : null, '⚠ Verplicht');
   } else if (!/^\d{4}$/.test(cn)) {
     setFieldState('f_colourNumber', 'warn', '⚠ Verwacht 4 cijfers');
+  } else if (!masterData.colours.find(c => c.code === cn)) {
+    setFieldState('f_colourNumber', 'warn', '⚠ Niet gevonden in Kleuren-stamdata — check op typefout of voeg toe');
   } else {
     setFieldState('f_colourNumber', 'ok', '');
   }
 
   var cnm = g('f_colourName');
-  setFieldState('f_colourName', cnm ? 'ok' : (touched.has('f_colourName') || all ? 'error' : null), cnm ? '' : '⚠ Verplicht');
+  if (!cnm) {
+    setFieldState('f_colourName', touched.has('f_colourName') || all ? 'error' : null, '⚠ Verplicht');
+  } else if (!masterData.colours.find(c => c.name && c.name.toLowerCase() === cnm.toLowerCase())) {
+    setFieldState('f_colourName', 'warn', '⚠ Niet gevonden in Kleuren-stamdata — check op typefout of voeg toe');
+  } else {
+    setFieldState('f_colourName', 'ok', '');
+  }
 
   var vendor = g('f_vendor');
   setFieldState('f_vendor', vendor ? 'ok' : (touched.has('f_vendor') || all ? 'error' : null), '');
