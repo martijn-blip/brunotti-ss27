@@ -465,7 +465,7 @@
       <span style="line-height:22px">SS27 · Product Data Tool · v<span id="headerVersion">1.9</span></span>
     </div>
   </div>
-  <div id="syncStatusBadge" title="Synchronisatiestatus" style="display:flex;align-items:center;gap:7px;padding:5px 12px;border-radius:20px;background:rgba(255,255,255,0.1);font-size:11.5px;color:#fff;margin-left:auto;white-space:nowrap;cursor:help">
+  <div id="syncStatusBadge" onmouseenter="showSyncPopover()" onmouseleave="hideSyncPopover()" onclick="document.getElementById('syncPopover')?hideSyncPopover():showSyncPopover()" style="display:flex;align-items:center;gap:7px;padding:5px 12px;border-radius:20px;background:rgba(255,255,255,0.1);font-size:11.5px;color:#fff;margin-left:auto;white-space:nowrap;cursor:help">
     <span id="syncIcon" style="display:flex;line-height:1"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 19a4.5 4.5 0 0 1-1.53-8.73A6 6 0 0 1 16.9 8.05 4.5 4.5 0 0 1 17.5 17"/><path d="M6.5 19h11"/></svg></span>
     <span id="syncDot" style="width:7px;height:7px;border-radius:50%;background:#555;flex-shrink:0"></span>
     <span id="syncLabel">—</span>
@@ -848,16 +848,17 @@
           <option value="missing_segment">⚠ Geen segment</option>
           <option value="missing_moq">⚠ Geen MOQ</option>
           <option value="missing_any">⚠ Enige data ontbreekt</option>
+          <option value="complete">✓ Volledig ingevuld</option>
         </optgroup>
       </select>
     </div>
 
-    <!-- KPI tiles — update with filters -->
+    <!-- KPI tiles — update with filters, klikbaar → filtert de tabel -->
     <div class="stats-row" style="margin:10px 0 14px" id="overzicht-stats">
-      <div class="stat-card"><div class="stat-label">Geselecteerd</div><div class="stat-value" id="stat-total">0</div><div class="stat-sub" id="stat-total-sub">SS27 entries</div></div>
-      <div class="stat-card"><div class="stat-label">Volledig</div><div class="stat-value" style="color:var(--teal)" id="stat-ok">0</div><div class="stat-sub">velden ingevuld</div></div>
-      <div class="stat-card"><div class="stat-label">Ontbrekende data</div><div class="stat-value" style="color:var(--red)" id="stat-missing">0</div><div class="stat-sub">vereist aandacht</div></div>
-      <div class="stat-card"><div class="stat-label">Marge OK (≥42%)</div><div class="stat-value" style="color:var(--teal)" id="stat-margin-ok">0</div><div class="stat-sub">entries</div></div>
+      <div class="stat-card" onclick="clearFilters()" style="cursor:pointer" title="Klik om alle filters te wissen"><div class="stat-label">Geselecteerd</div><div class="stat-value" id="stat-total">0</div><div class="stat-sub" id="stat-total-sub">SS27 entries</div></div>
+      <div class="stat-card" id="card-stat-ok" onclick="setOverzichtQuickFilter('complete','Volledig ingevuld')" style="cursor:pointer;border:2px solid transparent" title="Klik om alleen volledige entries te tonen"><div class="stat-label">Volledig</div><div class="stat-value" style="color:var(--teal)" id="stat-ok">0</div><div class="stat-sub">velden ingevuld · → klik</div></div>
+      <div class="stat-card" id="card-stat-missing" onclick="setOverzichtQuickFilter('missing_any','Ontbrekende data')" style="cursor:pointer;border:2px solid transparent" title="Klik om alleen entries met ontbrekende data te tonen"><div class="stat-label">Ontbrekende data</div><div class="stat-value" style="color:var(--red)" id="stat-missing">0</div><div class="stat-sub">vereist aandacht · → klik</div></div>
+      <div class="stat-card" id="card-stat-margin-ok" onclick="setOverzichtQuickFilter('ok','Marge OK (≥42%)')" style="cursor:pointer;border:2px solid transparent" title="Klik om alleen entries met marge ≥42% te tonen"><div class="stat-label">Marge OK (≥42%)</div><div class="stat-value" style="color:var(--teal)" id="stat-margin-ok">0</div><div class="stat-sub">entries · → klik</div></div>
       <div class="stat-card"><div class="stat-label">Gem. marge</div><div class="stat-value" style="color:var(--blue)" id="stat-margin">—</div><div class="stat-sub" id="stat-margin-sub">gefilterde selectie</div></div>
     </div>
 
@@ -866,6 +867,7 @@
       <span id="resultCount" style="font-size:12px;color:var(--ink-low)">—</span>
       <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ Filters wissen</button>
       <div style="flex:1"></div>
+      <button class="btn btn-primary btn-sm" onclick="openEntriesQuickFill()" title="Ontbrekende data van de gefilterde artikelen in één keer aanvullen">🖉 Snel aanvullen</button>
       <button class="btn btn-ghost btn-sm" onclick="exportFilteredCSV()">⬇ Export gefilterd</button>
       <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ Export alles</button>
     </div>
@@ -1798,6 +1800,23 @@ let _lastColSubTab = 'invoer';
 let _lastInfoSubTab = 'inzichten';
 
 function switchTab(t) {
+  // ── Robuustheid (fix leeg-scherm-bug): ──
+  // 1. Legacy sub-tabnamen van vóór de v2.0-menuherstructurering ('invoer',
+  //    'controle', 'overzicht' waren toen hoofdtabs) netjes doorverwijzen
+  //    naar hoofdtab + sub-tab. Deze namen zitten nog in oudere code en in
+  //    de changelog "Ga naar tab"-knoppen.
+  if (t === 'invoer' || t === 'controle' || t === 'overzicht') {
+    switchTab('calculatielijst');
+    setCalcTab(t);
+    return;
+  }
+  // 2. Onbekende tabnaam? Waarschuwen en niets doen — vroeger verborg de
+  //    loop hieronder dan álle tabs, waardoor de hele app leeg leek.
+  var KNOWN_TABS = ['stamdata','calculatielijst','collectielijst','export','info','versies'];
+  if (KNOWN_TABS.indexOf(t) === -1) {
+    console.warn('switchTab: onbekende tab "' + t + '" — genegeerd');
+    return;
+  }
   ['stamdata','calculatielijst','collectielijst','export','info','versies'].forEach(id => {
     document.getElementById('tab-'+id).classList.toggle('hidden', id !== t);
   });
@@ -2326,7 +2345,7 @@ function updateOverview(pool) {
   const src = (pool && pool.length !== undefined) ? pool : entries;
   const isFiltered = src !== entries && src.length !== entries.length;
   const total = src.length;
-  const ok = src.filter(e => e.fobCost && e.retailEuro && e.vendor && e.colourNumber && e.colourName).length;
+  const ok = src.filter(entryIsComplete).length; // canonieke definitie — zelfde als het 'complete'/'missing_any' filter
   const missing = total - ok;
   const margins = src.filter(e => e.actualMargin !== null && e.actualMargin !== undefined && !isNaN(e.actualMargin) && isFinite(e.actualMargin)).map(e => e.actualMargin);
   const avgMarg = margins.length ? margins.reduce((a,b)=>a+b,0)/margins.length : null;
@@ -2348,6 +2367,331 @@ function updateOverview(pool) {
   if (miEl) miEl.textContent = missing;
   if (moEl) moEl.textContent = margOk;
   if (maEl) maEl.textContent = avgMarg !== null ? (avgMarg*100).toFixed(1)+'%' : '—';
+
+  // Actieve-staat op de klikbare KPI-kaarten: gekleurde rand als het
+  // bijbehorende filter actief is (zelfde patroon als de stamdata-chips).
+  const mfNow = document.getElementById('filterMarge')?.value || '';
+  [['card-stat-ok','complete','var(--teal)'],
+   ['card-stat-missing','missing_any','var(--red)'],
+   ['card-stat-margin-ok','ok','var(--teal)']].forEach(([id, val, colr]) => {
+    const card = document.getElementById(id);
+    if (card) card.style.border = (mfNow === val) ? '2px solid ' + colr : '2px solid transparent';
+  });
+}
+
+// ── KPI-kaarten in het Overzicht: klik = filter (toggle) ───────
+// Zelfde gedrag als de stamdata-chips: klikken filtert de tabel,
+// nogmaals klikken op dezelfde kaart wist het filter weer.
+function setOverzichtQuickFilter(value, label) {
+  const el = document.getElementById('filterMarge');
+  if (!el) return;
+  if (el.value === value) {
+    el.value = '';
+    filterTable();
+    showToast('Filter gewist');
+    return;
+  }
+  el.value = value;
+  filterTable();
+  showToast('🔍 Gefilterd op: ' + label);
+}
+
+// ══ SNEL AANVULLEN (batch-edit op gefilterde records) ═══════════
+// Eén generieke modal voor zowel de Calculatielijst (entries) als de
+// stamdata-tabellen: per rij invulvelden voor de aanvulbare kolommen,
+// lege (ontbrekende) waarden rood omlijnd, en per kolom een
+// "vul hele kolom"-optie. Na opslaan worden alle kwaliteitsweergaven
+// (Overzicht-KPI's, Kwaliteitstab, Datakwaliteit per stamdata) in één
+// keer ververst via refreshQualityViews().
+
+// ── Marge-herberekening: één centrale formule ──────────────────
+// (Zelfde formule als bij het opslaan van een leverancier/artikel.)
+function recalcEntryMargin(e) {
+  if (!(e.fobCost && e.retailEuro)) return;
+  var imp = e.importFactor || 1.48, fx = e.currencyFactor || 0.9, cf = e.comFee || 1.0;
+  var vvpCf = e.fobCost * imp * fx * cf;
+  e.actualMargin = Math.round(((e.retailEuro - vvpCf * 2.15) / e.retailEuro) * 10000) / 10000;
+  e.vvpEuro      = Math.round(e.fobCost * imp * fx * 1000) / 1000;
+}
+
+// ── Alle kwaliteitsweergaven in één keer verversen ─────────────
+// Wordt na élke opslag aangeroepen (via persistData), zodat de
+// KPI-kaarten, de Kwaliteitstab en de stamdata-banner nooit
+// verouderde aantallen tonen. Elke stap defensief: een renderfout
+// mag nooit het opslaan zelf blokkeren.
+function refreshQualityViews() {
+  try { filterTable(); } catch (e) {}  // Overzicht-tabel + KPI-kaarten
+  try { if (typeof renderQualityReport === 'function') renderQualityReport(); } catch (e) {}
+  try { if (typeof renderStamdataQualityBanner === 'function') renderStamdataQualityBanner(); } catch (e) {}
+  try { if (typeof renderColKwaliteit === 'function') renderColKwaliteit(); } catch (e) {}
+}
+
+// ── Helpers ────────────────────────────────────────────────────
+function escAttr(v) {
+  return String(v === null || v === undefined ? '' : v)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function parseNlNumber(s) {
+  s = String(s || '').trim().replace(',', '.');
+  if (s === '') return null;
+  var n = Number(s);
+  return isNaN(n) ? null : n;
+}
+
+var _qfState = null; // { rows, fields, kind }
+var QF_MAX_ROWS = 200;
+
+function openQuickFill(opts) {
+  closeModalById('quickFillModal');
+  var rows = opts.rows.slice(0, QF_MAX_ROWS);
+  _qfState = { rows: rows, fields: opts.fields, kind: opts.kind, onSave: opts.onSave };
+
+  var capNote = opts.rows.length > QF_MAX_ROWS
+    ? '<div style="font-size:11px;color:var(--amber);margin-bottom:8px">⚠ Eerste ' + QF_MAX_ROWS + ' van ' + opts.rows.length + ' getoond — verfijn het filter voor de rest.</div>' : '';
+
+  // Kolomkop + "vul hele kolom" rij
+  var head = '<tr>' + '<th style="text-align:left;padding:6px 8px;position:sticky;top:0;background:var(--card,#fff);z-index:2">' + (opts.rowLabel || 'Record') + '</th>'
+    + opts.fields.map(function (f, fi) {
+      return '<th style="text-align:left;padding:6px 8px;position:sticky;top:0;background:var(--card,#fff);z-index:2">' + f.label + '</th>';
+    }).join('')
+    + (opts.kind === 'entries' ? '<th style="text-align:left;padding:6px 8px;position:sticky;top:0;background:var(--card,#fff);z-index:2">Marge</th>' : '')
+    + '</tr>'
+    + '<tr><td style="padding:4px 8px;font-size:10px;color:var(--ink-low)">↓ Vul hele kolom:</td>'
+    + opts.fields.map(function (f, fi) {
+      return '<td style="padding:4px 8px"><div style="display:flex;gap:4px">'
+        + '<input id="qf_col_' + fi + '" ' + (f.listId ? 'list="' + f.listId + '" ' : '') + 'placeholder="…" style="width:100%;font-size:11px;padding:3px 6px">'
+        + '<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 7px" onclick="qfFillColumn(' + fi + ')" title="Deze waarde in alle lege velden van deze kolom zetten">↓</button>'
+        + '</div></td>';
+    }).join('')
+    + (opts.kind === 'entries' ? '<td></td>' : '')
+    + '</tr>';
+
+  var body = rows.map(function (row, ri) {
+    return '<tr style="border-top:1px solid var(--border)">'
+      + '<td style="padding:6px 8px;font-size:12px"><b>' + escAttr(row.label) + '</b>' + (row.sub ? '<br><span style="font-size:10px;color:var(--ink-low)">' + escAttr(row.sub) + '</span>' : '') + '</td>'
+      + opts.fields.map(function (f, fi) {
+        var cur = f.get(row.ref);
+        var empty = cur === null || cur === undefined || cur === '' || cur === '?';
+        return '<td style="padding:6px 8px"><input id="qf_' + ri + '_' + fi + '" value="' + escAttr(empty ? '' : cur) + '" '
+          + (f.listId ? 'list="' + f.listId + '" ' : '')
+          + (f.numeric ? 'inputmode="decimal" ' : '')
+          + 'oninput="qfOnInput(' + ri + ',' + fi + ')" '
+          + 'style="width:100%;min-width:70px;font-size:12px;padding:4px 6px;border:1px solid ' + (empty ? 'var(--red)' : 'var(--border)') + ';border-radius:4px"></td>';
+      }).join('')
+      + (opts.kind === 'entries' ? '<td style="padding:6px 8px;font-size:11px;white-space:nowrap" id="qf_marge_' + ri + '">' + qfMargeLabel(row.ref.actualMargin) + '</td>' : '')
+      + '</tr>';
+  }).join('');
+
+  var datalists = (opts.datalists || []).map(function (dl) {
+    return '<datalist id="' + dl.id + '">' + dl.values.map(function (v) { return '<option value="' + escAttr(v) + '">'; }).join('') + '</datalist>';
+  }).join('');
+
+  var modal = document.createElement('div');
+  modal.id = 'quickFillModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:220;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = '<div style="background:var(--white,#fff);border-radius:10px;padding:20px;width:min(92vw,900px);max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3)">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+    + '<h3 style="font-size:15px;font-weight:700">🖉 ' + opts.title + ' <span style="font-weight:400;color:var(--ink-low);font-size:12px">(' + rows.length + ' records)</span></h3>'
+    + '<button class="btn btn-ghost btn-sm" onclick="closeModalById(\'quickFillModal\')">✕</button></div>'
+    + '<div style="font-size:11px;color:var(--ink-low);margin-bottom:8px">Rood omlijnde velden zijn leeg. Vul in wat je weet — alleen gewijzigde velden worden opgeslagen. Komma of punt als decimaalteken mag allebei.</div>'
+    + capNote
+    + '<div style="overflow:auto;flex:1;border:1px solid var(--border);border-radius:6px">'
+    + '<table style="width:100%;border-collapse:collapse;font-size:12px">' + head + body + '</table></div>'
+    + datalists
+    + '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">'
+    + '<button class="btn btn-ghost" onclick="closeModalById(\'quickFillModal\')">Annuleren</button>'
+    + '<button class="btn btn-primary" onclick="qfSave()">✓ Opslaan &amp; kaarten bijwerken</button></div></div>';
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeModalById('quickFillModal'); });
+  document.body.appendChild(modal);
+}
+
+function qfMargeLabel(m) {
+  if (m === null || m === undefined || isNaN(m)) return '<span style="color:var(--red)">—</span>';
+  var col = m >= 0.42 ? 'var(--teal)' : m >= 0.37 ? 'var(--amber)' : 'var(--red)';
+  return '<b style="color:' + col + '">' + (m * 100).toFixed(1) + '%</b>';
+}
+
+function qfOnInput(ri, fi) {
+  var inp = document.getElementById('qf_' + ri + '_' + fi);
+  if (!inp) return;
+  inp.style.border = '1px solid ' + (inp.value.trim() === '' ? 'var(--red)' : 'var(--teal)');
+  // Live marge-preview bij FOB-wijziging (alleen voor entries)
+  if (_qfState && _qfState.kind === 'entries' && _qfState.fields[fi].key === 'fobCost') {
+    var e = _qfState.rows[ri].ref;
+    var fob = parseNlNumber(inp.value);
+    var cell = document.getElementById('qf_marge_' + ri);
+    if (!cell) return;
+    if (fob && e.retailEuro) {
+      var imp = e.importFactor || 1.48, fx = e.currencyFactor || 0.9, cf = e.comFee || 1.0;
+      var m = ((e.retailEuro - fob * imp * fx * cf * 2.15) / e.retailEuro);
+      cell.innerHTML = qfMargeLabel(m);
+    } else {
+      cell.innerHTML = qfMargeLabel(e.actualMargin);
+    }
+  }
+}
+
+function qfFillColumn(fi) {
+  var colInp = document.getElementById('qf_col_' + fi);
+  if (!colInp || colInp.value.trim() === '') { showToast('⚠ Vul eerst een waarde in bij deze kolom'); return; }
+  var filled = 0;
+  _qfState.rows.forEach(function (_, ri) {
+    var inp = document.getElementById('qf_' + ri + '_' + fi);
+    if (inp && inp.value.trim() === '') { inp.value = colInp.value; qfOnInput(ri, fi); filled++; }
+  });
+  showToast('↓ ' + filled + ' lege velden gevuld met "' + colInp.value + '"');
+}
+
+function qfSave() {
+  if (!_qfState) return;
+  var changedCount = 0, fieldCounts = {};
+  _qfState.rows.forEach(function (row, ri) {
+    var rowChanged = false;
+    _qfState.fields.forEach(function (f, fi) {
+      var inp = document.getElementById('qf_' + ri + '_' + fi);
+      if (!inp) return;
+      var raw = inp.value.trim();
+      var cur = f.get(row.ref);
+      var curEmpty = cur === null || cur === undefined || cur === '' || cur === '?';
+      if (raw === '' && curEmpty) return;                 // leeg gebleven
+      var val = f.numeric ? parseNlNumber(raw) : raw;
+      if (f.numeric && raw !== '' && val === null) return; // onparseerbaar getal: overslaan
+      if (raw === '') return;                             // bestaande waarde niet leegmaken via snel aanvullen
+      if (String(val) === String(cur)) return;            // ongewijzigd
+      f.set(row.ref, val);
+      fieldCounts[f.label] = (fieldCounts[f.label] || 0) + 1;
+      rowChanged = true;
+    });
+    if (rowChanged) {
+      changedCount++;
+      if (_qfState.kind === 'entries') {
+        recalcEntryMargin(row.ref);
+        row.ref.updatedAt = new Date().toISOString();
+        row.ref.updatedBy = 'snel aanvullen';
+      }
+    }
+  });
+  if (changedCount === 0) { showToast('Geen wijzigingen om op te slaan'); return; }
+
+  if (_qfState.onSave) _qfState.onSave();
+  persistData(); // slaat op + refreshQualityViews() ververst alle kaarten
+  closeModalById('quickFillModal');
+  var summary = Object.keys(fieldCounts).map(function (k) { return k + ' ×' + fieldCounts[k]; }).join(', ');
+  showToast('✓ ' + changedCount + ' records aangevuld (' + summary + ') — kaarten bijgewerkt');
+}
+
+// ── Snel aanvullen: Calculatielijst Overzicht ──────────────────
+function openEntriesQuickFill() {
+  var pool = window._lastFilteredEntries || entries;
+  if (!pool.length) { showToast('⚠ Geen entries in de huidige selectie'); return; }
+  var qualities = [...new Set(entries.map(function (e) { return e.quality; }).filter(Boolean))].sort();
+  var segments  = [...new Set(entries.map(function (e) { return e.segment; }).filter(Boolean))].sort();
+  openQuickFill({
+    kind: 'entries',
+    title: 'Snel aanvullen — gefilterde artikelen',
+    rowLabel: 'Artikel',
+    rows: pool.map(function (e) {
+      return { ref: e, label: (e.styleName || e.styleNumber || '?'), sub: (e.colourName || '') + ' · ' + (e.vendor || 'geen leverancier') + ' · retail €' + (e.retailEuro || '—') };
+    }),
+    fields: [
+      { key: 'fobCost', label: 'FOB prijs', numeric: true,  get: function (e) { return e.fobCost; },  set: function (e, v) { e.fobCost = v; } },
+      { key: 'quality', label: 'Kwaliteit', listId: 'qf-dl-quality', get: function (e) { return e.quality; }, set: function (e, v) { e.quality = v; } },
+      { key: 'segment', label: 'Segment',   listId: 'qf-dl-segment', get: function (e) { return e.segment; }, set: function (e, v) { e.segment = v; } },
+      { key: 'moq',     label: 'MOQ',       numeric: true,  get: function (e) { return e.moq; },      set: function (e, v) { e.moq = v; } },
+    ],
+    datalists: [
+      { id: 'qf-dl-quality', values: qualities },
+      { id: 'qf-dl-segment', values: segments },
+    ],
+  });
+}
+
+// ── Snel aanvullen: Stamdata (werkt op het actieve issue-filter) ─
+function openStamQuickFill() {
+  var tab = window._currentStamTab || 'vendors';
+  var dataKeyMap = { vendors: 'vendors', colours: 'colours', fabrics: 'fabrics', hscodes: 'hsCodes', fits: 'fits' };
+  var pool = applyStamIssueFilter(masterData[dataKeyMap[tab]] || [], tab);
+  if (!pool.length) { showToast('⚠ Geen records in de huidige selectie'); return; }
+
+  var configs = {
+    vendors: {
+      title: 'Snel aanvullen — leveranciers', rowLabel: 'Leverancier',
+      row: function (v) { return { ref: v, label: v.name || '?', sub: (v.country || '') + ' ' + (v.currency || '') }; },
+      fields: [
+        { key: 'code',           label: 'Code',          get: function (v) { return v.code; },           set: function (v, x) { v.code = x; } },
+        { key: 'importFactor',   label: 'Import factor', numeric: true, get: function (v) { return v.importFactor; },   set: function (v, x) { v.importFactor = x; } },
+        { key: 'currencyFactor', label: 'FX factor',     numeric: true, get: function (v) { return v.currencyFactor; }, set: function (v, x) { v.currencyFactor = x; } },
+        { key: 'comFee',         label: 'Com. Fee',      numeric: true, get: function (v) { return v.comFee; },         set: function (v, x) { v.comFee = x; } },
+        { key: 'samplingFOB',    label: 'Sampling FOB',  numeric: true, get: function (v) { return v.samplingFOB; },    set: function (v, x) { v.samplingFOB = x; } },
+      ],
+      onSave: function () {
+        // Gewijzigde factoren doorvertalen naar gekoppelde artikelen + marges
+        pool.forEach(function (v) {
+          var nm = (v.name || '').trim();
+          entries.forEach(function (e) {
+            if (e.vendor !== nm) return;
+            e.importFactor   = v.importFactor   || 1.48;
+            e.currencyFactor = v.currencyFactor || 0.9;
+            e.comFee         = v.comFee         || 1.0;
+            recalcEntryMargin(e);
+          });
+        });
+        renderStamdata();
+      },
+    },
+    colours: {
+      title: 'Snel aanvullen — kleuren', rowLabel: 'Kleur',
+      row: function (c) { return { ref: c, label: (c.name || c.code || '?'), sub: c.code || '' }; },
+      fields: [
+        { key: 'code',    label: 'Code',    get: function (c) { return c.code; },    set: function (c, x) { c.code = x; } },
+        { key: 'name',    label: 'Naam',    get: function (c) { return c.name; },    set: function (c, x) { c.name = x; } },
+        { key: 'pantone', label: 'Pantone', get: function (c) { return c.pantone; }, set: function (c, x) { c.pantone = x; } },
+        { key: 'fedas',   label: 'Fedas',   get: function (c) { return c.fedas; },   set: function (c, x) { c.fedas = x; } },
+      ],
+      onSave: function () { renderStamdata(); },
+    },
+    fabrics: {
+      title: 'Snel aanvullen — stoffen', rowLabel: 'Stof',
+      row: function (f) { return { ref: f, label: f.quality || '?', sub: f.fabricCode || '' }; },
+      fields: [
+        { key: 'composition', label: 'Samenstelling', get: function (f) { return f.composition; }, set: function (f, x) { f.composition = x; } },
+        { key: 'supplier',    label: 'Leverancier',   listId: 'qf-dl-vendors', get: function (f) { return f.supplier; }, set: function (f, x) { f.supplier = x; } },
+        { key: 'weight',      label: 'Gewicht',       get: function (f) { return f.weight; },      set: function (f, x) { f.weight = x; } },
+      ],
+      datalists: function () { return [{ id: 'qf-dl-vendors', values: (masterData.vendors || []).map(function (v) { return v.name; }).filter(Boolean).sort() }]; },
+      onSave: function () { renderStamdata(); },
+    },
+    hscodes: {
+      title: 'Snel aanvullen — HS codes', rowLabel: 'HS Code',
+      row: function (h) { return { ref: h, label: h.code || '?', sub: h.descEN || '' }; },
+      fields: [
+        { key: 'descNL',   label: 'NL omschrijving', get: function (h) { return h.descNL; },   set: function (h, x) { h.descNL = x; } },
+        { key: 'category', label: 'Categorie',       get: function (h) { return h.category; }, set: function (h, x) { h.category = x; } },
+      ],
+      onSave: function () { renderStamdata(); },
+    },
+    fits: {
+      title: 'Snel aanvullen — pasvormen', rowLabel: 'Pasvorm',
+      row: function (f) { return { ref: f, label: f.name || f.no || '?', sub: '' }; },
+      fields: [
+        { key: 'no',   label: 'Nummer', get: function (f) { return f.no; },   set: function (f, x) { f.no = x; } },
+        { key: 'name', label: 'Naam',   get: function (f) { return f.name; }, set: function (f, x) { f.name = x; } },
+      ],
+      onSave: function () { renderStamdata(); },
+    },
+  };
+
+  var cfg = configs[tab];
+  if (!cfg) { showToast('⚠ Snel aanvullen is niet beschikbaar voor deze categorie'); return; }
+  openQuickFill({
+    kind: 'stam',
+    title: cfg.title,
+    rowLabel: cfg.rowLabel,
+    rows: pool.map(cfg.row),
+    fields: cfg.fields,
+    datalists: typeof cfg.datalists === 'function' ? cfg.datalists() : (cfg.datalists || []),
+    onSave: cfg.onSave,
+  });
 }
 
 function getSeason(e) {
@@ -2457,6 +2801,15 @@ function clearFilters() {
   filterTable();
 }
 
+// ── Canonieke volledigheids-definitie ──────────────────────────
+// Eén bron van waarheid voor "Volledig" / "Ontbrekende data", gebruikt
+// door zowel de KPI-kaarten (updateOverview) als het tabelfilter
+// (filterTable) — zodat het aantal op een kaart altijd exact gelijk is
+// aan het aantal rijen na doorklikken.
+function entryIsComplete(e) {
+  return !!(e.fobCost && e.retailEuro && e.vendor && e.colourNumber && e.colourName);
+}
+
 function filterTable() {
   const q   = (document.getElementById('tableSearch')?.value||'').toLowerCase();
   const col = document.getElementById('filterCollectie')?.value||'';
@@ -2476,17 +2829,18 @@ function filterTable() {
     if (vf  && e.vendor !== vf) return false;
     if (sf  && e.status !== sf) return false;
     if (mf === 'ok'      && !(e.actualMargin >= 0.42)) return false;
-    if (mf === 'warn'    && !(e.actualMargin >= 0.37 && e.actualMargin < 0.42)) return false;
-    if (mf === 'low'          && !(e.actualMargin !== null && e.actualMargin < 0.37)) return false;
     if (mf === 'warn'         && !(e.actualMargin !== null && e.actualMargin >= 0.37 && e.actualMargin < 0.42)) return false;
+    if (mf === 'low'          && !(e.actualMargin !== null && e.actualMargin < 0.37)) return false;
     if (mf === 'missing'      && e.actualMargin !== null) return false;
     if (mf === 'missing_fob'  && e.fobCost) return false;
     if (mf === 'missing_quality' && e.quality) return false;
     if (mf === 'missing_segment' && e.segment) return false;
     if (mf === 'missing_moq'     && e.moq) return false;
-    if (mf === 'missing_any'  && e.fobCost && e.retailEuro && e.colourName && e.quality) return false;
+    if (mf === 'missing_any'  && entryIsComplete(e)) return false;
+    if (mf === 'complete'     && !entryIsComplete(e)) return false;
     return true;
   });
+  window._lastFilteredEntries = filtered; // gebruikt door Snel aanvullen
   renderTable(filtered);
 }
 
@@ -3482,10 +3836,10 @@ function renderStamdataQualityBanner() {
     var bClass= pct >= 90 ? 'badge-ok'   : pct >= 70 ? 'badge-warn'   : 'badge-error';
     var active = (window._currentStamTab || 'vendors') === c.tab;
 
-    // Issue/warning summary (inline text)
+    // Issue/warning summary (inline, klikbaar → filtert de tabel)
     var notes = [];
-    if (c.err  > 0) notes.push('<span style="color:var(--red);font-size:10px">' + c.err + (c.tab==='vendors' ? ' leveranciers met issues' : ' issues') + '</span>');
-    if (c.warn > 0) notes.push('<span style="color:var(--amber);font-size:10px">' + c.warn + (c.tab==='vendors' ? ' aandacht' : ' aandacht') + '</span>');
+    if (c.err  > 0) notes.push('<span onclick="event.stopPropagation();setStamIssueFilter(\'' + c.tab + '\',\'__errors\',\'' + (c.tab==='vendors' ? 'Leveranciers met issues' : 'Met issues') + '\')" style="color:var(--red);font-size:10px;cursor:pointer;text-decoration:underline;text-underline-offset:2px" title="Klik om alleen deze records te tonen">' + c.err + (c.tab==='vendors' ? ' leveranciers met issues' : ' issues') + '</span>');
+    if (c.warn > 0) notes.push('<span onclick="event.stopPropagation();setStamIssueFilter(\'' + c.tab + '\',\'__warnings\',\'Vraagt aandacht\')" style="color:var(--amber);font-size:10px;cursor:pointer;text-decoration:underline;text-underline-offset:2px" title="Klik om alleen deze records te tonen">' + c.warn + ' aandacht</span>');
     var noteHtml = notes.length ? ' · ' + notes.join(' · ') : '';
 
     html += '<div onclick="setStamTab(\'' + c.tab + '\')" style="display:grid;grid-template-columns:160px 1fr 80px 90px;gap:8px;padding:10px 0;border-bottom:' + (active ? 'none' : '1px solid var(--border)') + ';align-items:center;cursor:pointer;transition:background .15s;'
@@ -3516,9 +3870,12 @@ function renderStamdataQualityBanner() {
         summaryItems.filter(function(i) { return i.count > 0; }).forEach(function(item) {
           var col = item.type === 'error' ? 'var(--red)' : 'var(--amber)';
           var bg  = item.type === 'error' ? 'var(--red-l)' : 'var(--amber-l)';
-          html += '<div style="display:flex;align-items:center;gap:4px;font-size:11px">'
+          var isActive = _stamIssueFilter && _stamIssueFilter.tab === c.tab && _stamIssueFilter.id === item.id;
+          html += '<div onclick="setStamIssueFilter(\'' + c.tab + '\',\'' + item.id + '\',\'' + item.label.replace(/'/g,'') + '\')" '
+            + 'style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;padding:2px 6px;border-radius:4px;border:1px solid ' + (isActive ? col : 'transparent') + ';' + (isActive ? 'background:' + bg + ';' : '') + '" '
+            + 'title="' + (isActive ? 'Klik om het filter te wissen' : 'Klik om alleen deze records in de tabel te tonen') + '">'
             + '<span style="color:' + col + '">●</span>'
-            + '<span style="color:var(--ink-mid)">' + item.label + '</span>'
+            + '<span style="color:var(--ink-mid);' + (isActive ? 'font-weight:700' : '') + '">' + item.label + '</span>'
             + '<span style="font-weight:700;background:' + bg + ';color:' + col + ';padding:0 6px;border-radius:3px;min-width:20px;text-align:center">' + item.count + '</span>'
             + '</div>';
         });
@@ -3529,6 +3886,18 @@ function renderStamdataQualityBanner() {
       html += '</div>';
     }
   });
+
+  // Actief issue-filter: duidelijke balk met wisknop, direct onder de banner
+  if (_stamIssueFilter) {
+    var fTab = cats.find(function(c){ return c.tab === _stamIssueFilter.tab; });
+    var dataKeyMap2 = { vendors:'vendors', colours:'colours', fabrics:'fabrics', hscodes:'hsCodes', fits:'fits' };
+    var fCount = (masterData[dataKeyMap2[_stamIssueFilter.tab]] || []).filter(_stamIssueFilter.test).length;
+    html += '<div style="display:flex;align-items:center;gap:10px;margin-top:12px;padding:8px 12px;background:var(--blue-l);border:1px solid var(--blue);border-radius:var(--radius);font-size:12px">'
+      + '<span>🔍 <b>Tabel gefilterd:</b> ' + (fTab ? fTab.label + ' · ' : '') + _stamIssueFilter.label + ' <b>(' + fCount + ')</b></span>'
+      + '<button class="btn btn-primary btn-sm" onclick="openStamQuickFill()" style="font-size:11px;padding:2px 10px;margin-left:auto" title="Ontbrekende gegevens van deze records in één keer aanvullen">🖉 Snel aanvullen</button>'
+      + '<button class="btn btn-ghost btn-sm" onclick="clearStamIssueFilter()" style="font-size:11px;padding:2px 10px">✕ Filter wissen</button>'
+      + '</div>';
+  }
 
   el.innerHTML = '<div style="font-size:11px;font-weight:700;color:var(--ink-low);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Datakwaliteit per stamdata</div>' + html;
 }
@@ -3556,6 +3925,9 @@ let currentStamTab = 'vendors';
 let editingStam = { type: null, index: -1 };
 
 function setStamTab(tab) {
+  // Handmatig van tab wisselen wist een actief issue-filter (tenzij de
+  // wissel juist vanuit setStamIssueFilter komt).
+  if (!_keepStamFilter && _stamIssueFilter) _stamIssueFilter = null;
   currentStamTab = tab;
   window._currentStamTab = tab;
   ['vendors','colours','fabrics','hscodes','fits','colhscodes','colfabrics','colarticlecode'].forEach(t => {
@@ -3614,6 +3986,7 @@ function renderVendors() {
     (!vc || v.country === vc) &&
     (!vx || v.currency === vx)
   );
+  filtered = applyStamIssueFilter(filtered, 'vendors');
 
   var flagMap = {CN:'🇨🇳',TR:'🇹🇷',GR:'🇬🇷',IN:'🇮🇳',TW:'🇹🇼',KR:'🇰🇷',BD:'🇧🇩',ID:'🇮🇩',PK:'🇵🇰'};
 
@@ -3764,11 +4137,7 @@ function saveInlineVendor(ri) {
     e.importFactor   = newVendor.importFactor   || 1.48;
     e.currencyFactor = newVendor.currencyFactor || 0.9;
     e.comFee         = newVendor.comFee         || 1.0;
-    if (e.fobCost && e.retailEuro) {
-      var vvpCf = e.fobCost * e.importFactor * e.currencyFactor * e.comFee;
-      e.actualMargin = Math.round(((e.retailEuro - vvpCf * 2.15) / e.retailEuro) * 10000) / 10000;
-      e.vvpEuro      = Math.round(e.fobCost * e.importFactor * e.currencyFactor * 1000) / 1000;
-    }
+    recalcEntryMargin(e);
   });
 
   // Persist
@@ -3830,9 +4199,10 @@ function addVendorRow() {
 // ── COLOURS ──────────────────────────────────────────────────
 function renderColours() {
   const q = (document.getElementById('colourSearch')?.value || '').toLowerCase();
-  const filtered = masterData.colours.filter(c =>
+  let filtered = masterData.colours.filter(c =>
     !q || c.code.includes(q) || c.name.toLowerCase().includes(q) || (c.pantone||'').toLowerCase().includes(q)
   );
+  filtered = applyStamIssueFilter(filtered, 'colours');
   document.getElementById('colourTableBody').innerHTML = filtered.slice(0,100).map((c,fi) => {
     const ri = masterData.colours.indexOf(c);
     return `<tr>
@@ -3883,10 +4253,11 @@ function addColourRow() {
 function renderFabrics() {
   const q  = (document.getElementById('fabricSearch')?.value || '').toLowerCase();
   const ft = document.getElementById('fabricType')?.value || '';
-  const filtered = masterData.fabrics.filter(f =>
+  let filtered = masterData.fabrics.filter(f =>
     (!q || f.quality.toLowerCase().includes(q) || (f.composition||'').toLowerCase().includes(q) || (f.supplier||'').toLowerCase().includes(q)) &&
     (!ft || (f.type||'').toUpperCase().includes(ft))
   );
+  filtered = applyStamIssueFilter(filtered, 'fabrics');
   document.getElementById('fabricTableBody').innerHTML = filtered.map((f,fi) => {
     const ri = masterData.fabrics.indexOf(f);
     const fabIssues = [];
@@ -4061,9 +4432,10 @@ function renderColArticleCodeStam() {
 
 function renderHSCodes() {
   const q = (document.getElementById('hsSearch')?.value || '').toLowerCase();
-  const filtered = masterData.hsCodes.filter(h =>
+  let filtered = masterData.hsCodes.filter(h =>
     !q || h.code.includes(q) || (h.descNL||'').toLowerCase().includes(q) || (h.category||'').toLowerCase().includes(q)
   );
+  filtered = applyStamIssueFilter(filtered, 'hscodes');
   document.getElementById('hsTableBody').innerHTML = filtered.slice(0,80).map((h,fi) => {
     const ri = masterData.hsCodes.indexOf(h);
     return `<tr>
@@ -4100,14 +4472,16 @@ function editHS(i) {
 
 // ── FITS ─────────────────────────────────────────────────────
 function renderFits() {
-  document.getElementById('fitTableBody').innerHTML = masterData.fits.map((f,i) => `<tr>
+  document.getElementById('fitTableBody').innerHTML = applyStamIssueFilter(masterData.fits, 'fits').map((f) => {
+    const ri = masterData.fits.indexOf(f); // echte index, ook als er een filter actief is
+    return `<tr>
     <td class="mono" style="font-weight:700">${f.no}</td>
     <td>${f.name}</td>
     <td style="white-space:nowrap">
-      <button class="btn btn-ghost btn-sm" onclick="editFit(${i})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-      <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteStam('fits',${i})">✕</button>
+      <button class="btn btn-ghost btn-sm" onclick="editFit(${ri})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+      <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteStam('fits',${ri})">✕</button>
     </td>
-  </tr>`).join('');
+  </tr>`;}).join('');
 }
 
 function editFit(i) {
@@ -4155,14 +4529,12 @@ function saveModalEdit() {
       const oldName = masterData.vendors[index].name;
       entries.forEach(e => {
         if (e.vendor === oldName || e.vendor === name) {
-          const imp = newRecord.importFactor || 1.48;
-          const fx  = newRecord.currencyFactor || 0.9;
-          const cf  = newRecord.comFee || 1.0;
-          if (e.fobCost && e.retailEuro) {
-            const vvpCf = e.fobCost * imp * fx * cf;
-            e.actualMargin = Math.round(((e.retailEuro - vvpCf * 2.15) / e.retailEuro) * 10000) / 10000;
-            e.vvpEuro = Math.round(e.fobCost * imp * fx * 1000) / 1000;
-          }
+          // Factoren óók op de entry opslaan (voorheen werd alleen de marge
+          // ermee berekend maar bleven de entry-factoren verouderd staan)
+          e.importFactor   = newRecord.importFactor   || 1.48;
+          e.currencyFactor = newRecord.currencyFactor || 0.9;
+          e.comFee         = newRecord.comFee         || 1.0;
+          recalcEntryMargin(e);
         }
       });
       persistData();
@@ -5361,10 +5733,25 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
-    version: '2.3',
+    version: '2.4',
     date: '2026-07-06',
     author: 'Martijn Cornelissen',
     active: true,
+    features: [
+      { name: 'Uitgebreide statusdetails bij de cloud-badge', desc: 'Hover (of tik op mobiel) over het wolkje in de header voor een volledig statuspaneel: huidige status met uitleg, tijdstip van de laatste synchronisatie, auto-sync aan/uit, of er nog openstaande wijzigingen zijn, aantal artikelen en de app-versie — live bijgewerkt terwijl het paneel open staat', tab: null, icon: '☁' },
+      { name: 'Snel aanvullen (batch-edit op gefilterde records)', desc: 'Nieuwe 🖉-knop in het Calculatielijst-Overzicht en in de stamdata-filterbalk: vul ontbrekende data (FOB, kwaliteit, segment, MOQ, leveranciersvelden, enz.) per rij of per hele kolom in één keer aan. Met live marge-preview terwijl je een FOB-prijs typt, autocomplete, en komma óf punt als decimaalteken', tab: 'overzicht', icon: '🖉' },
+      { name: 'Kwaliteitskaarten en KPI-kaarten linken door', desc: 'De 7 kaarten in de Kwaliteitstab, de KPI-kaarten in het Overzicht (Volledig / Ontbrekende data / Marge OK) en de "Ontbrekende velden"-chips in de stamdata-banner filteren nu allemaal de bijbehorende tabel — met toggle-gedrag, actieve markering en gegarandeerd kloppende aantallen (kaartgetal = tabelrijen)', tab: 'kwaliteit', icon: '🔗' },
+      { name: 'Kwaliteitsweergaven altijd actueel', desc: 'Na élke opslag (bewerken, snel aanvullen, bulk edit) worden de Overzicht-KPI\'s, de Kwaliteitstab, de stamdata-banner en de Collectielijst-kwaliteit in één keer ververst', tab: null, icon: '🔄' },
+      { name: 'Leeg-scherm-bug gefixt', desc: 'Doorklikken vanaf de kwaliteitskaarten, de bewerk-knop in het overzicht en de changelog-knoppen gaf een leeg scherm (verwijzing naar tabnamen van vóór de v2.0-menuherstructurering). switchTab verwijst oude namen nu automatisch door en negeert onbekende namen', tab: null, icon: '🐛' },
+      { name: 'Drie sluimerende bugs opgeruimd', desc: 'Annuleren/✕ in de stamdata-editmodal deed niets (naamconflict tussen twee closeModal-functies); de Pasvorm-tabel kon met een actief filter het verkeerde record bewerken/verwijderen; en de marge-formule stond 3× gedupliceerd waarvan één variant de leveranciersfactoren niet op het artikel opsloeg — nu één centrale recalcEntryMargin', tab: null, icon: '🧹' },
+      { name: 'Eén volledigheids-definitie', desc: 'De KPI-kaarten en het filter "Enige data ontbreekt" gebruikten verschillende definities van volledigheid; nu één canonieke entryIsComplete (FOB + retail + leverancier + kleurnummer + kleurnaam), plus nieuw filter "✓ Volledig ingevuld"', tab: null, icon: '📏' },
+    ]
+  },
+  {
+    version: '2.3',
+    date: '2026-07-06',
+    author: 'Martijn Cornelissen',
+    active: false,
     features: [
       { name: 'Live opslagstatus in de header', desc: 'Nieuwe compacte statusbadge (herstelde functionaliteit) laat op elk tabblad zien of je verbonden bent, of er wordt gesynchroniseerd, of alles is opgeslagen — met simpele lijn-cloud-iconen die meewisselen (verbonden/bezig/opgeslagen/fout) en de volledige details in een hover-tooltip', tab: null, icon: '☁' },
       { name: 'Google Sheet-link in Export-tab', desc: 'Duidelijke, altijd toegankelijke knop naar de live Google Sheet, direct bovenaan de Export-tab', tab: 'export', icon: '📊' },
@@ -5598,8 +5985,11 @@ function gotoOverzichtWithFilter(filterType, filterValue, vendorName) {
     if (el) el.value = '';
   });
 
-  // Switch to overzicht tab (this re-renders the tab including filter elements)
-  switchTab('overzicht');
+  // Switch naar de Calculatielijst-hoofdtab en dáárbinnen de Overzicht-sub-tab.
+  // (Vóór de v2.0-menuherstructurering was 'overzicht' een eigen hoofdtab;
+  // switchTab('overzicht') verborg daarna alle tabs → leeg scherm.)
+  switchTab('calculatielijst');
+  setCalcTab('overzicht');
 
   // Set the correct filter after DOM is ready
   setTimeout(() => {
@@ -5675,38 +6065,98 @@ document.addEventListener('click', function(ev) {
 
 
 function getStamdataSummaryItems(tab) {
-  var items = {
+  // Elk item heeft een stabiel id en een test-predicaat. De count wordt
+  // uit datzelfde predicaat berekend, en het filter (klikken op een chip)
+  // gebruikt het óók — aantal op de chip = aantal rijen in de tabel, altijd.
+  var defs = {
     vendors: [
-      { label:'Geen leverancierscode', count:(masterData.vendors||[]).filter(function(x){return !x.code;}).length,                                     type:'error' },
-      { label:'Geen importfactor',     count:(masterData.vendors||[]).filter(function(x){return !x.importFactor;}).length,                             type:'error' },
-      { label:'Geen FX factor',        count:(masterData.vendors||[]).filter(function(x){return !x.currencyFactor;}).length,                           type:'error' },
-      { label:'Geen sampling FOB',     count:(masterData.vendors||[]).filter(function(x){return !x.samplingFOB||x.samplingFOB==='?';}).length,         type:'error' },
-      { label:'Spaties in naam',       count:(masterData.vendors||[]).filter(function(x){return x.name!==x.name.trim();}).length,                      type:'warn'  },
-      { label:'Geen commissie fee',    count:(masterData.vendors||[]).filter(function(x){return !x.comFee;}).length,                                   type:'warn'  },
+      { id:'no_code',    label:'Geen leverancierscode', type:'error', test:function(x){return !x.code;} },
+      { id:'no_impf',    label:'Geen importfactor',     type:'error', test:function(x){return !x.importFactor;} },
+      { id:'no_fx',      label:'Geen FX factor',        type:'error', test:function(x){return !x.currencyFactor;} },
+      { id:'no_sfob',    label:'Geen sampling FOB',     type:'error', test:function(x){return !x.samplingFOB||x.samplingFOB==='?';} },
+      { id:'ws_name',    label:'Spaties in naam',       type:'warn',  test:function(x){return x.name!==x.name.trim();} },
+      { id:'no_comfee',  label:'Geen commissie fee',    type:'warn',  test:function(x){return !x.comFee;} },
     ],
     colours: [
-      { label:'Geen code',    count:(masterData.colours||[]).filter(function(x){return !x.code;}).length,    type:'error' },
-      { label:'Geen naam',    count:(masterData.colours||[]).filter(function(x){return !x.name;}).length,    type:'error' },
-      { label:'Geen pantone', count:(masterData.colours||[]).filter(function(x){return !x.pantone;}).length, type:'warn'  },
-      { label:'Geen fedas',   count:(masterData.colours||[]).filter(function(x){return !x.fedas;}).length,   type:'warn'  },
+      { id:'no_code',    label:'Geen code',    type:'error', test:function(x){return !x.code;} },
+      { id:'no_name',    label:'Geen naam',    type:'error', test:function(x){return !x.name;} },
+      { id:'no_pantone', label:'Geen pantone', type:'warn',  test:function(x){return !x.pantone;} },
+      { id:'no_fedas',   label:'Geen fedas',   type:'warn',  test:function(x){return !x.fedas;} },
     ],
     fabrics: [
-      { label:'Geen kwaliteitsnaam', count:(masterData.fabrics||[]).filter(function(x){return !x.quality;}).length,     type:'error' },
-      { label:'Geen samenstelling',  count:(masterData.fabrics||[]).filter(function(x){return !x.composition;}).length, type:'warn'  },
-      { label:'Geen leverancier',    count:(masterData.fabrics||[]).filter(function(x){return !x.supplier;}).length,    type:'warn'  },
-      { label:'Geen gewicht',        count:(masterData.fabrics||[]).filter(function(x){return !x.weight;}).length,      type:'warn'  },
+      { id:'no_quality',     label:'Geen kwaliteitsnaam', type:'error', test:function(x){return !x.quality;} },
+      { id:'no_composition', label:'Geen samenstelling',  type:'warn',  test:function(x){return !x.composition;} },
+      { id:'no_supplier',    label:'Geen leverancier',    type:'warn',  test:function(x){return !x.supplier;} },
+      { id:'no_weight',      label:'Geen gewicht',        type:'warn',  test:function(x){return !x.weight;} },
     ],
     hscodes: [
-      { label:'Geen code',            count:(masterData.hsCodes||[]).filter(function(x){return !x.code;}).length,    type:'error' },
-      { label:'Geen NL omschrijving', count:(masterData.hsCodes||[]).filter(function(x){return !x.descNL;}).length,  type:'warn'  },
-      { label:'Geen categorie',       count:(masterData.hsCodes||[]).filter(function(x){return !x.category;}).length,type:'warn'  },
+      { id:'no_code',     label:'Geen code',            type:'error', test:function(x){return !x.code;} },
+      { id:'no_descnl',   label:'Geen NL omschrijving', type:'warn',  test:function(x){return !x.descNL;} },
+      { id:'no_category', label:'Geen categorie',       type:'warn',  test:function(x){return !x.category;} },
     ],
     fits: [
-      { label:'Geen nummer', count:(masterData.fits||[]).filter(function(x){return !x.no;}).length,   type:'error' },
-      { label:'Geen naam',   count:(masterData.fits||[]).filter(function(x){return !x.name;}).length, type:'error' },
+      { id:'no_no',   label:'Geen nummer', type:'error', test:function(x){return !x.no;} },
+      { id:'no_name', label:'Geen naam',   type:'error', test:function(x){return !x.name;} },
     ],
   };
-  return items[tab] || [];
+  var dataKeyMap = { vendors:'vendors', colours:'colours', fabrics:'fabrics', hscodes:'hsCodes', fits:'fits' };
+  var data = masterData[dataKeyMap[tab]] || [];
+  return (defs[tab] || []).map(function (d) {
+    return { id:d.id, label:d.label, type:d.type, test:d.test, count:data.filter(d.test).length };
+  });
+}
+
+// Speciale filters voor de "X met issues" / "X aandacht" teksten in de
+// kwaliteitsbalken — met exact dezelfde definities als de bannertellingen,
+// zodat het aantal in de tekst altijd gelijk is aan het aantal tabelrijen.
+function getStamIssueTest(tab, id) {
+  if (id === '__errors') {
+    if (tab === 'vendors') return function(v){ return getVendorQuality(v).issues.length > 0; };
+    return null; // andere categorieën tonen geen aparte error-telling in de balk
+  }
+  if (id === '__warnings') {
+    if (tab === 'vendors') return function(v){ var q=getVendorQuality(v); return q.issues.length===0 && q.warnings.length>0; };
+    if (tab === 'colours') return function(c){ return !(c.code&&c.name&&c.pantone); };
+    if (tab === 'fabrics') return function(f){ return !(f.quality&&f.composition&&f.supplier); };
+    if (tab === 'hscodes') return function(h){ return !(h.code&&h.descNL); };
+    if (tab === 'fits')    return function(f){ return !(f.no&&f.name); };
+    return null;
+  }
+  var item = getStamdataSummaryItems(tab).find(function(i){ return i.id === id; });
+  return item ? item.test : null;
+}
+
+// ── Issue-filter op de stamdata-tabellen ───────────────────────
+var _stamIssueFilter = null; // { tab, id, label, test } of null
+var _keepStamFilter  = false;
+
+function setStamIssueFilter(tab, id, label) {
+  // Zelfde chip nogmaals aanklikken = filter uitzetten (toggle)
+  if (_stamIssueFilter && _stamIssueFilter.tab === tab && _stamIssueFilter.id === id) {
+    clearStamIssueFilter();
+    return;
+  }
+  var test = getStamIssueTest(tab, id);
+  if (!test) return;
+  _stamIssueFilter = { tab: tab, id: id, label: label, test: test };
+  _keepStamFilter = true;
+  setStamTab(tab);
+  _keepStamFilter = false;
+  showToast('🔍 Gefilterd op: ' + label);
+}
+
+function clearStamIssueFilter() {
+  _stamIssueFilter = null;
+  renderStamdata();
+}
+
+// Toepassen in de tabelrenders: geeft de gefilterde lijst terug als er
+// een issue-filter actief is voor deze tab, anders de lijst ongewijzigd.
+function applyStamIssueFilter(list, tab) {
+  if (_stamIssueFilter && _stamIssueFilter.tab === tab) {
+    return list.filter(_stamIssueFilter.test);
+  }
+  return list;
 }
 
 
@@ -5947,7 +6397,60 @@ function setSyncStatus(state, label, tooltip) {
   dot.style.background = colors[state] || '#555';
   lbl.textContent = label || '';
   if (icon) icon.innerHTML = syncIconForState(state, label);
-  if (badge) badge.title = tooltip || label || '';
+  // Detail bewaren voor de hover-popover (rijker dan een native title-tooltip)
+  window._syncDetail = { state: state, label: label || '', tooltip: tooltip || label || '', at: new Date() };
+  if (badge) badge.removeAttribute('title'); // native tooltip uit — de popover neemt het over
+  // Popover live verversen als hij open staat
+  var pop = document.getElementById('syncPopover');
+  if (pop) pop.innerHTML = buildSyncPopoverHtml();
+}
+
+// ── Hover-popover met uitgebreide synchronisatiestatus ─────────
+function buildSyncPopoverHtml() {
+  var d = window._syncDetail || {};
+  var stateLabels = { online:'✓ Verbonden', syncing:'⟳ Bezig', error:'⚠ Probleem', offline:'○ Offline', config:'⚙ Niet geconfigureerd' };
+  var stateColors = { online:'var(--teal,#1D9E75)', syncing:'#ba7517', error:'#c0392b', offline:'#777', config:'#777' };
+
+  var lastSync = localStorage.getItem('brunotti_ss27_lastSync');
+  var lastSyncTxt = 'nog niet gesynchroniseerd';
+  if (lastSync) {
+    try {
+      var dt = new Date(lastSync);
+      lastSyncTxt = dt.toLocaleDateString('nl-NL', { day:'numeric', month:'short' }) + ' om ' + dt.toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    } catch (e) {}
+  }
+  var autoOn = (typeof autoSyncEnabled === 'function') ? autoSyncEnabled() : true;
+  var unsynced = false;
+  try { unsynced = hasUnsyncedChanges(); } catch (e) {}
+
+  function row(k, v) {
+    return '<div style="display:flex;justify-content:space-between;gap:16px;padding:3px 0"><span style="color:#999">' + k + '</span><span style="font-weight:600;text-align:right">' + v + '</span></div>';
+  }
+  return '<div style="font-weight:700;color:' + (stateColors[d.state] || '#777') + ';margin-bottom:2px">' + (stateLabels[d.state] || d.label || '—') + '</div>'
+    + '<div style="color:#ccc;margin-bottom:8px;line-height:1.4">' + (d.tooltip || '') + '</div>'
+    + row('Laatste sync', lastSyncTxt)
+    + row('Auto-sync', autoOn ? '✓ Aan (5 sec. na wijziging)' : '✗ Uit — handmatig syncen')
+    + row('Openstaande wijzigingen', unsynced ? '<span style="color:#e8a33d">Ja — wordt gesynchroniseerd</span>' : '<span style="color:#5fc99a">Nee — alles staat in Drive</span>')
+    + row('Artikelen', (typeof entries !== 'undefined' ? entries.length : '—'))
+    + row('App-versie', (typeof APP_VERSION !== 'undefined' ? 'v' + APP_VERSION : '—'))
+    + '<div style="color:#888;margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.12);font-size:10px">Handmatig syncen kan via Instellingen → Sync &amp; Instellingen</div>';
+}
+
+function showSyncPopover() {
+  hideSyncPopover();
+  var badge = document.getElementById('syncStatusBadge');
+  if (!badge) return;
+  var r = badge.getBoundingClientRect();
+  var pop = document.createElement('div');
+  pop.id = 'syncPopover';
+  pop.style.cssText = 'position:fixed;top:' + (r.bottom + 8) + 'px;right:' + Math.max(8, window.innerWidth - r.right) + 'px;z-index:300;background:#1c1c1e;color:#eee;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:12px 14px;font-size:11.5px;min-width:270px;max-width:330px;box-shadow:0 10px 34px rgba(0,0,0,0.45);pointer-events:none';
+  pop.innerHTML = buildSyncPopoverHtml();
+  document.body.appendChild(pop);
+}
+
+function hideSyncPopover() {
+  var pop = document.getElementById('syncPopover');
+  if (pop) pop.remove();
 }
 
 // ── Dirty-tracking: heeft deze browser nog niet-gesynchroniseerde
@@ -6209,6 +6712,9 @@ function persistData() {
     showToast('⚠ Browseropslag vol — je data wordt veilig in Google Drive bewaard');
   }
   if (typeof updateStorageUsageBar === 'function') { try { updateStorageUsageBar(); } catch(e){} }
+  // Na élke opslag: KPI-kaarten, Kwaliteitstab en stamdata-banner verversen
+  // zodat de volledigheids-aantallen overal direct kloppen.
+  try { refreshQualityViews(); } catch(e){}
   scheduleAutoSync();
 }
 
@@ -6325,7 +6831,7 @@ function showGasConfig() {
   d.className = 'ov';
   d.innerHTML = '<div class="modal" style="max-width:520px">'
     + '<div class="mhdr"><div class="mtit">\u2699 Google Drive koppeling instellen</div>'
-    + '<button class="btn btn-ghost btn-sm" onclick="closeModal(\'gasConfigModal\')">&#x2715;</button></div>'
+    + '<button class="btn btn-ghost btn-sm" onclick="closeModalById(\'gasConfigModal\')">&#x2715;</button></div>'
     + '<div style="font-size:12px;color:var(--ink-low);margin-bottom:16px">Volg de stappen hieronder om de koppeling in te stellen. Je hebt alleen een Google-account nodig.</div>'
     + '<div style="background:var(--fill);border-radius:var(--radius);padding:14px;margin-bottom:16px;font-size:12px">'
     + '<div style="font-weight:700;margin-bottom:8px">Stap 1 \u2014 Ga naar Google Apps Script</div>'
@@ -6342,7 +6848,7 @@ function showGasConfig() {
     + '<input id="gas_url" placeholder="https://script.google.com/macros/s/..." value="' + (APPS_SCRIPT_URL||'') + '" style="font-size:11px">'
     + '</div>'
     + '<div class="mft">'
-    + '<button class="btn btn-ghost btn-sm" onclick="closeModal(\'gasConfigModal\')">Annuleren</button>'
+    + '<button class="btn btn-ghost btn-sm" onclick="closeModalById(\'gasConfigModal\')">Annuleren</button>'
     + '<button class="btn btn-primary btn-sm" onclick="saveGasConfig()">Opslaan &amp; verbinden</button>'
     + '</div>'
     + '</div>';
@@ -6357,7 +6863,7 @@ function saveGasConfig() {
   }
   APPS_SCRIPT_URL = url;
   localStorage.setItem('brunotti_gas_url', url);
-  closeModal('gasConfigModal');
+  closeModalById('gasConfigModal');
   setSyncStatus('online', 'Verbonden', 'Verbonden met Google Drive');
   var saveBtn = document.getElementById('syncSaveBtn');
   var loadBtn = document.getElementById('syncLoadBtn');
@@ -6369,7 +6875,10 @@ function saveGasConfig() {
   loadFromSharePoint(false);
 }
 
-function closeModal(id) {
+// Hernoemd van closeModal(id): de naamloze closeModal() voor de
+// stamdata-editmodal werd hierdoor overschreven (function hoisting),
+// waardoor Annuleren/✕ in die modal niets meer deed.
+function closeModalById(id) {
   var el = document.getElementById(id);
   if (el) el.remove();
 }
