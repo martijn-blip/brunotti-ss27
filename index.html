@@ -465,7 +465,12 @@
       <span style="line-height:22px">SS27 · Product Data Tool · v<span id="headerVersion">1.9</span></span>
     </div>
   </div>
-  <button class="btn btn-ghost btn-sm" onclick="openHelpModal()" title="Hoe werkt deze app?">❓ Hoe werkt dit?</button>
+  <div id="syncStatusBadge" title="Synchronisatiestatus" style="display:flex;align-items:center;gap:7px;padding:5px 12px;border-radius:20px;background:rgba(255,255,255,0.1);font-size:11.5px;color:#fff;margin-left:auto;white-space:nowrap;cursor:help">
+    <span id="syncIcon" style="display:flex;line-height:1"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 19a4.5 4.5 0 0 1-1.53-8.73A6 6 0 0 1 16.9 8.05 4.5 4.5 0 0 1 17.5 17"/><path d="M6.5 19h11"/></svg></span>
+    <span id="syncDot" style="width:7px;height:7px;border-radius:50%;background:#555;flex-shrink:0"></span>
+    <span id="syncLabel">—</span>
+  </div>
+  <button onclick="openHelpModal()" title="Hoe werkt deze app?" style="background:none;border:none;color:#fff;font-size:13px;cursor:pointer;padding:4px 6px">Help</button>
 </header>
 
 <div id="helpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:250;align-items:center;justify-content:center">
@@ -491,13 +496,14 @@
 
       <div style="font-weight:700;margin-bottom:8px">🔄 Samenwerken: hoe zit het met synchroniseren?</div>
       <ul style="margin:0 0 4px 18px;padding:0">
-        <li style="margin-bottom:6px"><b>Synchroniseren met team</b> stuurt jouw wijzigingen naar de gedeelde Google Sheet, zodat iedereen dezelfde data ziet.</li>
-        <li style="margin-bottom:6px"><b>Ophalen van team</b> haalt de laatste teamversie op naar jouw scherm.</li>
-        <li style="margin-bottom:6px">Bij het openen van de app wordt automatisch gecheckt of er een nieuwere teamversie is, en die wordt dan opgehaald.</li>
-        <li style="margin-bottom:6px">Werk je liever eerst rustig lokaal door, synchroniseer dan zodra je klaar bent — de app waarschuwt je als er ondertussen door iemand anders is gesynchroniseerd, zodat niemands werk verloren gaat.</li>
+        <li style="margin-bottom:6px">Google Drive is de <b>primaire opslag</b> — 5 seconden na je laatste wijziging synchroniseert de app automatisch op de achtergrond, zonder dat je zelf iets hoeft te doen.</li>
+        <li style="margin-bottom:6px">De statusbadge rechtsboven in de header (het wolkje) laat live zien wat er gebeurt: verbonden, bezig met opslaan, of net opgeslagen — hover eroverheen voor het exacte tijdstip.</li>
+        <li style="margin-bottom:6px"><b>Synchroniseren met team</b> en <b>Ophalen van team</b> (in Instellingen) blijven beschikbaar om dit handmatig te forceren, bijvoorbeeld vlak voordat je het tabblad sluit.</li>
+        <li style="margin-bottom:6px">Bij het openen van de app wordt altijd eerst gecheckt of er een nieuwere teamversie is, en die wordt dan automatisch opgehaald.</li>
+        <li style="margin-bottom:6px">Voordat elke automatische of handmatige sync jouw wijzigingen wegschrijft, checkt de app eerst of iemand anders ondertussen iets heeft gesynchroniseerd — zo niet stil overschreven, maar een duidelijke melding, zodat niemands werk verloren gaat.</li>
       </ul>
 
-      <p style="margin-top:14px;font-size:12px;color:var(--ink-low)">Deze uitleg is op elk moment opnieuw op te roepen via de "❓ Hoe werkt dit?"-knop rechtsboven.</p>
+      <p style="margin-top:14px;font-size:12px;color:var(--ink-low)">Deze uitleg is op elk moment opnieuw op te roepen via de "Help"-knop rechtsboven.</p>
     </div>
   </div>
 </div>
@@ -1330,10 +1336,11 @@
 
         <div style="font-weight:700;margin-bottom:8px">🔄 Samenwerken: hoe zit het met synchroniseren?</div>
         <ul style="margin:0 0 4px 18px;padding:0">
-          <li style="margin-bottom:6px"><b>Synchroniseren met team</b> stuurt jouw wijzigingen naar de gedeelde Google Sheet, zodat iedereen dezelfde data ziet.</li>
-          <li style="margin-bottom:6px"><b>Ophalen van team</b> haalt de laatste teamversie op naar jouw scherm.</li>
-          <li style="margin-bottom:6px">Bij het openen van de app wordt automatisch gecheckt of er een nieuwere teamversie is, en die wordt dan opgehaald.</li>
-          <li style="margin-bottom:6px">Werk je liever eerst rustig lokaal door, synchroniseer dan zodra je klaar bent — de app waarschuwt je als er ondertussen door iemand anders is gesynchroniseerd, zodat niemands werk verloren gaat.</li>
+          <li style="margin-bottom:6px">Google Drive is de <b>primaire opslag</b> — 5 seconden na je laatste wijziging synchroniseert de app automatisch op de achtergrond, zonder dat je zelf iets hoeft te doen.</li>
+          <li style="margin-bottom:6px">De statusbadge rechtsboven in de header (het wolkje) laat live zien wat er gebeurt: verbonden, bezig met opslaan, of net opgeslagen — hover eroverheen voor het exacte tijdstip.</li>
+          <li style="margin-bottom:6px"><b>Synchroniseren met team</b> en <b>Ophalen van team</b> (in Instellingen) blijven beschikbaar om dit handmatig te forceren, bijvoorbeeld vlak voordat je het tabblad sluit.</li>
+          <li style="margin-bottom:6px">Bij het openen van de app wordt altijd eerst gecheckt of er een nieuwere teamversie is, en die wordt dan automatisch opgehaald.</li>
+          <li style="margin-bottom:6px">Voordat elke automatische of handmatige sync jouw wijzigingen wegschrijft, checkt de app eerst of iemand anders ondertussen iets heeft gesynchroniseerd — zo niet stil overschreven, maar een duidelijke melding, zodat niemands werk verloren gaat.</li>
         </ul>
       </div>
     </div>
@@ -1344,6 +1351,18 @@
 <!-- ══ TAB: INFO ════════════════════════════════════════════ -->
 <!-- ══ TAB: EXPORT ═══════════════════════════════════════════ -->
 <div id="tab-export" class="main hidden">
+
+  <!-- ── Google Sheet: alle data in één oogopslag ── -->
+  <div class="card" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+    <div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:3px">📊 Live Google Sheet — alle data</div>
+      <div style="font-size:12px;color:var(--ink-low)">De volledige, altijd actuele dataset (Calculatielijst, stamdata en Collectielijst) — bijgewerkt bij elke synchronisatie.</div>
+    </div>
+    <a id="openSheetBtnExport" href="#" target="_blank" rel="noopener"
+       style="display:none;align-items:center;gap:6px;padding:10px 16px;background:#0f9d58;color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap">
+      📊 Open Google Sheet
+    </a>
+  </div>
 
   <!-- ── Shopify export ── -->
   <div class="card" style="margin-bottom:16px">
@@ -5342,10 +5361,22 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
-    version: '2.2',
+    version: '2.3',
     date: '2026-07-06',
     author: 'Martijn Cornelissen',
     active: true,
+    features: [
+      { name: 'Live opslagstatus in de header', desc: 'Nieuwe compacte statusbadge (herstelde functionaliteit) laat op elk tabblad zien of je verbonden bent, of er wordt gesynchroniseerd, of alles is opgeslagen — met simpele lijn-cloud-iconen die meewisselen (verbonden/bezig/opgeslagen/fout) en de volledige details in een hover-tooltip', tab: null, icon: '☁' },
+      { name: 'Google Sheet-link in Export-tab', desc: 'Duidelijke, altijd toegankelijke knop naar de live Google Sheet, direct bovenaan de Export-tab', tab: 'export', icon: '📊' },
+      { name: 'Help-knop vereenvoudigd', desc: '"❓ Hoe werkt dit?" vervangen door een simpele, subtiele "Help"-tekst zonder rand', tab: null, icon: '✨' },
+      { name: 'Samenwerken-uitleg geactualiseerd', desc: 'De handleiding beschrijft nu de automatische achtergrond-sync (Google Drive als primaire opslag) in plaats van alleen de handmatige knoppen', tab: null, icon: '📝' },
+    ]
+  },
+  {
+    version: '2.2',
+    date: '2026-07-06',
+    author: 'Martijn Cornelissen',
+    active: false,
     features: [
       { name: 'Nieuwe Info-tab "Roadmap"', desc: 'De volledige app-doorlichting van 6 juli als 20 afvinkbare verbeterpunten in vijf blokken: meeting-beslispunten, Power BI, Shopify, techniek en samen doorontwikkelen. Per punt aanpasbare prioriteit (hoog/middel/laag), filters (o.a. "alleen hoog" voor in de meeting) en voortgang per blok — alles wordt bewaard', tab: 'info', icon: '🗺️' },
       { name: 'Auto-sync veel lichter via meta-endpoint', desc: 'De conflict-check vóór elke automatische push gebruikt voortaan het nieuwe lichte ?action=meta endpoint (alleen tijdstip/naam) in plaats van de complete dataset te downloaden, met automatische terugval zolang het Apps Script nog niet is bijgewerkt', tab: null, icon: '⚡' },
@@ -5882,7 +5913,7 @@ function initMsal() {
     if (btn) btn.style.display = '';
   } else {
     // Auto-load data van Google Drive bij opstarten
-    setSyncStatus('online', 'Google Drive');
+    setSyncStatus('online', 'Verbonden', 'Verbonden met Google Drive');
     var saveBtn = document.getElementById('syncSaveBtn');
     var loadBtn = document.getElementById('syncLoadBtn');
     if (saveBtn) saveBtn.style.display = '';
@@ -5892,13 +5923,31 @@ function initMsal() {
   }
 }
 
-function setSyncStatus(state, label) {
+// Simpele, ronde lijn-cloud-iconen (zelfde stijl als de rest van de app-iconen).
+var CLOUD_ICONS = {
+  plain: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 19a4.5 4.5 0 0 1-1.53-8.73A6 6 0 0 1 16.9 8.05 4.5 4.5 0 0 1 17.5 17"/><path d="M6.5 19h11"/></svg>',
+  sync:  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 19a4.5 4.5 0 0 1-1.53-8.73A6 6 0 0 1 16.9 8.05 4.5 4.5 0 0 1 17.5 17"/><path d="M6.5 19h11"/><path d="M10 13v5"/><path d="M8 16l2 2 2-2"/><path d="M14 13v-3"/><path d="M12 12l2-2 2 2"/></svg>',
+  check: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 19a4.5 4.5 0 0 1-1.53-8.73A6 6 0 0 1 16.9 8.05 4.5 4.5 0 0 1 17.5 17"/><path d="M6.5 19h5"/><circle cx="16.5" cy="18" r="4.2"/><path d="M14.7 18l1.3 1.3 2.3-2.6"/></svg>',
+  error: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 19a4.5 4.5 0 0 1-1.53-8.73A6 6 0 0 1 16.9 8.05 4.5 4.5 0 0 1 17.5 17"/><path d="M6.5 19h5"/><circle cx="16.5" cy="18" r="4.2"/><path d="M14.7 18h3.6"/></svg>',
+};
+function syncIconForState(state, label) {
+  if (state === 'syncing') return CLOUD_ICONS.sync;
+  if (state === 'error') return CLOUD_ICONS.error;
+  if (state === 'online' && label === 'Opgeslagen') return CLOUD_ICONS.check;
+  return CLOUD_ICONS.plain;
+}
+
+function setSyncStatus(state, label, tooltip) {
   var dot = document.getElementById('syncDot');
   var lbl = document.getElementById('syncLabel');
+  var icon = document.getElementById('syncIcon');
+  var badge = document.getElementById('syncStatusBadge');
   if (!dot || !lbl) return;
   var colors = { online:'#1D9E75', offline:'#555', syncing:'#ba7517', error:'#c0392b', config:'#555' };
   dot.style.background = colors[state] || '#555';
   lbl.textContent = label || '';
+  if (icon) icon.innerHTML = syncIconForState(state, label);
+  if (badge) badge.title = tooltip || label || '';
 }
 
 // ── Dirty-tracking: heeft deze browser nog niet-gesynchroniseerde
@@ -5948,7 +5997,7 @@ async function syncToSharePoint(force) {
     // nieuwere versie op Drive gezet door iemand anders? Zo ja, dan
     // zou een blinde push die wijzigingen stilletjes overschrijven. ──
     if (!force) {
-      setSyncStatus('syncing', 'Controleren op wijzigingen...');
+      setSyncStatus('syncing', 'Controleren...', 'Controleren op wijzigingen van teamleden');
       try {
         var checkRes = await fetch(APPS_SCRIPT_URL + '?action=load', { method: 'GET' });
         var checkData = await checkRes.json();
@@ -5966,7 +6015,7 @@ async function syncToSharePoint(force) {
               'Als je nu synchroniseert, overschrijf je die versie met jouw lokale data.\n\n' +
               'Klik OK om eerst die nieuwere versie op te halen (jouw ongesynchroniseerde wijzigingen blijven lokaal bewaard), of Annuleren om het te laten zoals het is.'
             );
-            setSyncStatus('online', 'Google Drive');
+            setSyncStatus('online', 'Verbonden', 'Verbonden met Google Drive');
             if (saveBtn) saveBtn.disabled = false;
             if (loadBtn) loadBtn.disabled = false;
             if (proceed) {
@@ -5982,7 +6031,7 @@ async function syncToSharePoint(force) {
         // of ze willen doorgaan zonder de conflict-check.
         var proceedAnyway = confirm('Kon niet controleren op een nieuwere versie (' + checkErr.message + ').\n\nToch doorgaan met synchroniseren?');
         if (!proceedAnyway) {
-          setSyncStatus('online', 'Google Drive');
+          setSyncStatus('online', 'Verbonden', 'Verbonden met Google Drive');
           if (saveBtn) saveBtn.disabled = false;
           if (loadBtn) loadBtn.disabled = false;
           showToast('ℹ Synchronisatie geannuleerd');
@@ -5991,7 +6040,7 @@ async function syncToSharePoint(force) {
       }
     }
 
-    setSyncStatus('syncing', 'Opslaan...');
+    setSyncStatus('syncing', 'Opslaan...', 'Bezig met opslaan naar Google Drive');
 
     var payload = {
       action: 'save',
@@ -6011,7 +6060,7 @@ async function syncToSharePoint(force) {
     });
     var data = await res.json();
     if (data.status === 'ok') {
-      setSyncStatus('online', 'Opgeslagen — ' + new Date().toLocaleTimeString('nl-NL'));
+      setSyncStatus('online', 'Opgeslagen', '✓ Opgeslagen in Drive om ' + new Date().toLocaleTimeString('nl-NL'));
       showToast('✓ ' + (data.entries||entries.length) + ' entries gesynchroniseerd met team');
       localStorage.setItem('brunotti_ss27_lastSync', new Date().toISOString());
       markSynced();
@@ -6023,7 +6072,7 @@ async function syncToSharePoint(force) {
       throw new Error(data.error || 'Onbekende fout');
     }
   } catch(err) {
-    setSyncStatus('error', 'Opslaan mislukt');
+    setSyncStatus('error', 'Fout', 'Opslaan mislukt — probeer het later opnieuw');
     showToast('\u2717 Opslaan mislukt: ' + err.message);
   } finally {
     if (saveBtn) saveBtn.disabled = false;
@@ -6033,7 +6082,7 @@ async function syncToSharePoint(force) {
 
 async function loadFromSharePoint(silent) {
   if (!APPS_SCRIPT_URL) { if (!silent) showGasConfig(); return; }
-  if (!silent) setSyncStatus('syncing', 'Laden...');
+  if (!silent) setSyncStatus('syncing', 'Laden...', 'Bezig met laden vanuit Google Drive');
 
   try {
     var res = await fetch(APPS_SCRIPT_URL + '?action=load', { method: 'GET' });
@@ -6041,7 +6090,7 @@ async function loadFromSharePoint(silent) {
 
     if (data.status === 'empty') {
       if (!silent) showToast('\u24d8 Nog geen data in Google Drive \u2014 lokale data actief');
-      setSyncStatus('online', 'Google Drive');
+      setSyncStatus('online', 'Verbonden', 'Verbonden met Google Drive');
       return;
     }
 
@@ -6061,7 +6110,7 @@ async function loadFromSharePoint(silent) {
           if (silent) {
             // Niet automatisch overschrijven bij opstarten — lokale
             // wijzigingen blijven veilig staan totdat gebruiker kiest.
-            setSyncStatus('online', 'Nieuwere teamversie beschikbaar');
+            setSyncStatus('online', 'Nieuwere versie', 'Nieuwere teamversie beschikbaar — je hebt zelf nog niet-gesynchroniseerde wijzigingen');
             showToast('⚠ Nieuwere teamversie beschikbaar, maar jij hebt niet-gesynchroniseerde lokale wijzigingen. Synchroniseer eerst, of klik "Ophalen van team" om je lokale wijzigingen te verwijderen.');
             return;
           }
@@ -6073,7 +6122,7 @@ async function loadFromSharePoint(silent) {
           );
           if (!overwrite) {
             showToast('ℹ Ophalen geannuleerd — jouw lokale wijzigingen zijn behouden');
-            setSyncStatus('online', 'Google Drive');
+            setSyncStatus('online', 'Verbonden', 'Verbonden met Google Drive');
             return;
           }
         }
@@ -6091,15 +6140,15 @@ async function loadFromSharePoint(silent) {
         markSynced();
         filteredEntries = [...entries];
         updateOverview();
-        setSyncStatus('online', (data.savedBy || 'Google Drive') + ' \u00b7 ' + new Date(data.savedAt).toLocaleTimeString('nl-NL'));
+        setSyncStatus('online', 'Geladen', 'Geladen vanuit Drive · ' + (data.savedBy || '?') + ' · ' + new Date(data.savedAt).toLocaleTimeString('nl-NL'));
         if (!silent) showToast('\u2713 ' + entries.length + ' entries geladen van Google Drive (door ' + (data.savedBy||'?') + ')');
       } else {
-        setSyncStatus('online', 'Google Drive');
+        setSyncStatus('online', 'Actueel', 'Verbonden met Drive — gegevens zijn up-to-date');
         if (!silent) showToast('\u24d8 Lokale data is nieuwer \u2014 gebruik \u2191 Opslaan om te synchroniseren');
       }
     }
   } catch(err) {
-    setSyncStatus('error', 'Laden mislukt');
+    setSyncStatus('error', 'Fout', 'Laden mislukt — probeer het later opnieuw');
     if (!silent) showToast('\u2717 Laden mislukt: ' + err.message);
   }
 }
@@ -6111,6 +6160,12 @@ function updateSheetButton(url) {
   if (btn) {
     btn.href = url;
     btn.style.display = 'inline-flex';
+  }
+  // Update knop in Export-tab
+  var eBtn = document.getElementById('openSheetBtnExport');
+  if (eBtn) {
+    eBtn.href = url;
+    eBtn.style.display = 'inline-flex';
   }
   // Update knop in header (indien aanwezig)
   var hBtn = document.getElementById('openSheetBtnHeader');
@@ -6161,15 +6216,15 @@ function scheduleAutoSync() {
   if (!autoSyncEnabled() || !APPS_SCRIPT_URL) return;
   clearTimeout(autoSyncTimer);
   autoSyncTimer = setTimeout(runAutoSync, 5000); // 5s na de laatste wijziging
-  setSyncStatus('syncing', 'Wijzigingen — auto-sync gepland...');
+  setSyncStatus('syncing', 'Gepland...', 'Wijzigingen gedetecteerd — auto-sync gepland');
 }
 
 async function runAutoSync() {
   if (autoSyncBusy) { scheduleAutoSync(); return; }
-  if (!hasUnsyncedChanges()) { setSyncStatus('online', 'Google Drive'); return; }
+  if (!hasUnsyncedChanges()) { setSyncStatus('online', 'Verbonden', 'Verbonden met Google Drive'); return; }
   autoSyncBusy = true;
   try {
-    setSyncStatus('syncing', 'Automatisch synchroniseren...');
+    setSyncStatus('syncing', 'Bezig...', 'Automatisch synchroniseren met Google Drive');
 
     // Conflict-check: nooit stilletjes een nieuwere teamversie overschrijven.
     // Eerst het lichte ?action=meta proberen (alleen savedAt/savedBy); als het
@@ -6188,7 +6243,7 @@ async function runAutoSync() {
       var cloudTime = new Date(checkData.savedAt).getTime();
       var localTime = new Date(localStorage.getItem('brunotti_ss27_lastSync') || 0).getTime();
       if (!isNaN(cloudTime) && cloudTime > localTime) {
-        setSyncStatus('error', '⚠ Nieuwere teamversie op Drive — synchroniseer handmatig');
+        setSyncStatus('error', 'Conflict', '⚠ Nieuwere teamversie op Drive — synchroniseer handmatig via de knoppen');
         showToast('⚠ Auto-sync gepauzeerd: er staat een nieuwere teamversie op Drive. Gebruik "Synchroniseren met team" of "Ophalen van team" om dit op te lossen.');
         return;
       }
@@ -6213,7 +6268,7 @@ async function runAutoSync() {
     if (data.status === 'ok') {
       try { localStorage.setItem('brunotti_ss27_lastSync', new Date().toISOString()); } catch(e){}
       markSynced();
-      setSyncStatus('online', '✓ Auto-opgeslagen in Drive — ' + new Date().toLocaleTimeString('nl-NL'));
+      setSyncStatus('online', 'Opgeslagen', '✓ Automatisch opgeslagen in Drive om ' + new Date().toLocaleTimeString('nl-NL'));
       if (data.sheetUrl) {
         try { localStorage.setItem('brunotti_ss27_sheetUrl', data.sheetUrl); } catch(e){}
         updateSheetButton(data.sheetUrl);
@@ -6225,7 +6280,7 @@ async function runAutoSync() {
     // Offline of tijdelijke fout: stil falen — data staat lokaal gecachet,
     // de volgende wijziging (of handmatige sync) probeert het opnieuw.
     console.warn('Auto-sync mislukt:', err);
-    setSyncStatus('error', 'Auto-sync mislukt — lokaal bewaard, probeert later opnieuw');
+    setSyncStatus('error', 'Fout', 'Auto-sync mislukt — lokaal bewaard, probeert later opnieuw');
   } finally {
     autoSyncBusy = false;
   }
@@ -6241,7 +6296,7 @@ function toggleAutoSync() {
   } else {
     clearTimeout(autoSyncTimer);
     showToast('ℹ Auto-sync uitgeschakeld — vergeet niet handmatig te synchroniseren');
-    setSyncStatus('online', 'Google Drive (handmatige sync)');
+    setSyncStatus('online', 'Verbonden', 'Verbonden met Google Drive (handmatige sync)');
   }
 }
 
@@ -6303,7 +6358,7 @@ function saveGasConfig() {
   APPS_SCRIPT_URL = url;
   localStorage.setItem('brunotti_gas_url', url);
   closeModal('gasConfigModal');
-  setSyncStatus('online', 'Google Drive');
+  setSyncStatus('online', 'Verbonden', 'Verbonden met Google Drive');
   var saveBtn = document.getElementById('syncSaveBtn');
   var loadBtn = document.getElementById('syncLoadBtn');
   var loginBtn = document.getElementById('syncLoginBtn');
