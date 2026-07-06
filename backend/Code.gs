@@ -308,9 +308,14 @@ var MASTERDATA_SHEETS = [
     tabName: 'Stoffen',
     dataKey: 'fabrics',
     columns: [
-      { key: 'quality', label: 'Kwaliteit' }, { key: 'composition', label: 'Samenstelling' },
-      { key: 'weight', label: 'Gewicht' }, { key: 'supplier', label: 'Leverancier' },
-      { key: 'fabricCode', label: 'Fabric Code' }, { key: 'type', label: 'Type' },
+      { key: 'quality', label: 'Kwaliteit' }, { key: 'productGroup', label: 'Productgroep' },
+      { key: 'composition', label: 'Samenstelling' }, { key: 'weight', label: 'Gewicht' },
+      { key: 'width', label: 'Breedte' }, { key: 'supplier', label: 'Leverancier' },
+      { key: 'fabricSupplier', label: 'Stofleverancier' }, { key: 'fabricCode', label: 'Stofcode' },
+      { key: 'pricePerUnit', label: 'Prijs/eenheid' }, { key: 'moqSampling', label: 'MOQ sampling' },
+      { key: 'moqBulk', label: 'MOQ bulk' }, { key: 'leadtimeGreige', label: 'Leadtime greige' },
+      { key: 'leadtimeFinished', label: 'Leadtime finished' }, { key: 'functionality', label: 'Functionaliteit' },
+      { key: 'washingInfo', label: 'Wasinstructies' }, { key: 'type', label: 'Type' },
       { key: 'remark', label: 'Opmerking' }
     ]
   },
