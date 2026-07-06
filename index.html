@@ -961,8 +961,6 @@
     <button class="btn btn-ghost btn-sm stam-tab" onclick="setStamTab('fits')" id="stab-fits">📐 Pasvorm</button>
     <div style="flex-basis:100%;height:0"></div>
     <div class="tab-group-label" style="border-left:none;padding-left:0">📦 COLLECTIELIJST</div>
-    <button class="btn btn-ghost btn-sm stam-tab" onclick="setStamTab('colhscodes')" id="stab-colhscodes">📋 HS Codes</button>
-    <button class="btn btn-ghost btn-sm stam-tab" onclick="setStamTab('colfabrics')" id="stab-colfabrics">🧵 Fabric Info</button>
     <button class="btn btn-ghost btn-sm stam-tab" onclick="setStamTab('colarticlecode')" id="stab-colarticlecode">🔢 Artikelcode</button>
   </div>
 
@@ -1040,7 +1038,7 @@
     </div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>Kwaliteit</th><th>Samenstelling</th><th>Gewicht</th><th>Leverancier</th><th>Fabric Code</th><th>Type</th><th>Opmerking</th><th>Acties</th></tr></thead>
+        <thead><tr><th>Kwaliteit</th><th>Samenstelling</th><th>Gewicht</th><th>Leverancier</th><th>Stofleverancier</th><th>Stofcode</th><th>Prijs</th><th>MOQ bulk</th><th>Leadtime</th><th>Type</th><th>Opmerking</th><th>Acties</th></tr></thead>
         <tbody id="fabricTableBody"></tbody>
       </table>
     </div>
@@ -1053,7 +1051,7 @@
     </div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>HS Code</th><th>NL omschrijving</th><th>Categorie</th><th>Gewicht (kg)</th><th>Acties</th></tr></thead>
+        <thead><tr><th>HS Code</th><th>NL omschrijving</th><th>EN omschrijving</th><th>Categorie</th><th>Gewicht (kg)</th><th>Acties</th></tr></thead>
         <tbody id="hsTableBody"></tbody>
       </table>
     </div>
@@ -1069,36 +1067,6 @@
       <table>
         <thead><tr><th>Nr.</th><th>Pasvorm naam</th><th>Acties</th></tr></thead>
         <tbody id="fitTableBody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- ── Collectielijst stamdata: HS Codes ─────────────────── -->
-  <div id="stam-colhscodes" class="card hidden">
-    <div style="font-size:11px;color:var(--ink-low);margin-bottom:10px;padding:6px 10px;background:var(--fill);border-radius:var(--radius);display:inline-block">📦 Deze douanecodes komen uit de Collectielijst-import (250 codes) — alleen-lezen referentie.</div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <input type="text" id="colHsSearch" placeholder="🔍 Zoek op code of omschrijving..." oninput="renderColHsCodesStam()" style="max-width:340px">
-      <button class="btn btn-ghost btn-sm" onclick="exportColHsCodesCSV()">⬇ Export CSV</button>
-    </div>
-    <div class="tbl-wrap" style="max-height:60vh;overflow-y:auto">
-      <table>
-        <thead><tr><th>Code</th><th>Omschrijving (EN)</th><th>Categorie</th><th>Gewicht (kg)</th></tr></thead>
-        <tbody id="colHsCodesBody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- ── Collectielijst stamdata: Fabric Info ──────────────── -->
-  <div id="stam-colfabrics" class="card hidden">
-    <div style="font-size:11px;color:var(--ink-low);margin-bottom:10px;padding:6px 10px;background:var(--fill);border-radius:var(--radius);display:inline-block">📦 Deze stofinformatie komt uit de Collectielijst-import (118 stoffen) — alleen-lezen referentie.</div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <input type="text" id="colFabricSearch" placeholder="🔍 Zoek op kwaliteit, leverancier of samenstelling..." oninput="renderColFabricsStam()" style="max-width:340px">
-      <button class="btn btn-ghost btn-sm" onclick="exportColFabricsCSV()">⬇ Export CSV</button>
-    </div>
-    <div class="tbl-wrap" style="max-height:60vh;overflow-y:auto">
-      <table>
-        <thead><tr><th>Kwaliteit</th><th>Garment Supplier</th><th>Samenstelling</th><th>Breedte</th><th>Gewicht</th><th>Prijs</th><th>MOQ Bulk</th><th>Leadtime</th></tr></thead>
-        <tbody id="colFabricsBody"></tbody>
       </table>
     </div>
   </div>
@@ -1430,6 +1398,18 @@
     </div>
 
     <div class="card" style="margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:2px">🕳️ Stamdata-gaten — klik om te vullen</div>
+      <div style="font-size:11px;color:var(--ink-low);margin-bottom:10px">Live per categorie: welke velden ontbreken nog. Klik op een chip om direct naar de gefilterde stamdata-tabel te springen — daar vul je de gaten met ✏ of 🖉 Snel aanvullen.</div>
+      <div id="inzichtenStamGaps"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:2px">🏭 Leveranciers in cijfers</div>
+      <div style="font-size:11px;color:var(--ink-low);margin-bottom:10px">Live per leverancier: aantal artikelen, datavolledigheid en marges. Klik op een regel om het Overzicht op die leverancier te filteren. Handige voorbereiding op de inkooplijst-koppeling (fase 3).</div>
+      <div id="inzichtenVendorTable"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
       <div style="font-size:13px;font-weight:700;margin-bottom:10px">📊 Wat we vonden</div>
       <div style="font-size:13px;line-height:1.7;color:var(--ink-mid)">
         <p style="margin-bottom:10px"><b>De twee bestanden beschrijven vrijwel dezelfde collectie, maar apart bijgehouden.</b> 347 van de 349 stijlnummers uit CALCULATIONLIST staan ook in COLLECTIONLIST; op stijl+kleur-niveau komt 96% exact overeen (655 van 684 combinaties). Ze zijn dus niet automatisch van elkaar afgeleid — vermoedelijk door verschillende mensen/teams bijgehouden, wat precies verklaart waarom er inconsistenties ontstonden.</p>
@@ -1450,7 +1430,7 @@
         <ul style="margin:0 0 0 18px;padding:0">
           <li style="margin-bottom:6px">Kleur- en Kwaliteit-velden in Invoer koppelen nu aan de stamdata (autocomplete + waarschuwing bij afwijking), zodat nieuwe typefouten niet meer ontstaan.</li>
           <li style="margin-bottom:6px">Bij het importeren van Collectielijst-data is bewust <b>alleen</b> nieuwe informatie overgenomen (Swim, Proto, SMS, etc.) — kernvelden als leveranciersnaam komen nergens uit COLLECTIONLIST, om bestaande inconsistenties niet de app in te laten sluipen.</li>
-          <li style="margin-bottom:6px">"Garment Supplier" in de Fabric Info-tabel wordt automatisch herkend en gekoppeld aan de volledige naam uit Leveranciers, met duidelijke kleurindicatie wanneer dat niet lukt.</li>
+          <li style="margin-bottom:6px">De losse alleen-lezen Collectielijst-tabs (HS Codes, Fabric Info) zijn samengevoegd met de bewerkbare stamdata — één versie per categorie, volledig bewerkbaar en syncend, waarbij "Garment Supplier"-afkortingen automatisch worden herkend en gekoppeld aan de volledige naam uit Leveranciers.</li>
           <li style="margin-bottom:6px">Conflict-detectie bij synchroniseren voorkomt dat toekomstige teamwijzigingen elkaar stilzwijgend overschrijven.</li>
         </ul>
       </div>
@@ -1849,10 +1829,102 @@ function setInfoTab(sub) {
       btn.classList.toggle('btn-ghost', s !== sub);
     }
   });
-  if (sub === 'inzichten')     { renderInzichtenQualityBars(); }
+  if (sub === 'inzichten')     { renderInzichtenQualityBars(); renderInzichtenStamGaps(); renderInzichtenVendors(); }
   if (sub === 'aanbevelingen') { renderRecCheckList(); renderMeetingTodos(); }
   if (sub === 'roadmap')       { renderRoadmap(); }
   if (sub === 'changelog')     { renderChangelog(); }
+}
+
+// ── Data-inzichten: stamdata-gaten (klikbaar) ──────────────────
+function goInsightsStamIssue(tab, id, label) {
+  switchTab('stamdata');
+  setStamIssueFilter(tab, id, label);
+}
+
+function renderInzichtenStamGaps() {
+  const el = document.getElementById('inzichtenStamGaps');
+  if (!el) return;
+  const cats = [
+    { tab: 'vendors',  icon: '🏭', label: 'Leveranciers' },
+    { tab: 'colours',  icon: '🎨', label: 'Kleuren' },
+    { tab: 'fabrics',  icon: '🧵', label: 'Stoffen' },
+    { tab: 'hscodes',  icon: '📋', label: 'HS Codes' },
+    { tab: 'fits',     icon: '📐', label: 'Pasvorm' },
+  ];
+  const dataKeyMap = { vendors: 'vendors', colours: 'colours', fabrics: 'fabrics', hscodes: 'hsCodes', fits: 'fits' };
+  el.innerHTML = cats.map(c => {
+    const data = masterData[dataKeyMap[c.tab]] || [];
+    const items = getStamdataSummaryItems(c.tab).filter(i => i.count > 0);
+    const withIssues = data.filter(rec => items.some(i => i.test(rec))).length;
+    const complete = data.length - withIssues;
+    const pct = data.length ? Math.round(complete / data.length * 100) : 100;
+    const pctColor = pct >= 90 ? 'var(--teal)' : pct >= 60 ? 'var(--amber)' : 'var(--red)';
+    const chips = items
+      .sort((a, b) => b.count - a.count)
+      .map(i => `<span class="need-update" style="cursor:pointer;${i.type==='error'?'background:rgba(192,57,43,0.12);color:var(--red);':''}"
+        onclick="goInsightsStamIssue('${c.tab}','${i.id}','${i.label.replace(/'/g, "\\'")}')"
+        title="Klik: spring naar de gefilterde ${c.label}-tabel">${i.label}: <b>${i.count}</b></span>`).join(' ');
+    return `<div style="display:grid;grid-template-columns:150px 90px 1fr;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);align-items:start">
+      <div style="font-weight:600;font-size:12px;padding-top:2px">${c.icon} ${c.label} <span style="color:var(--ink-low);font-weight:400">(${data.length})</span></div>
+      <div style="padding-top:2px"><span class="badge ${pct>=90?'badge-ok':pct>=60?'badge-warn':'badge-error'}" title="${complete} van ${data.length} records zonder ontbrekende velden" style="font-size:11px">${pct}% compleet</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${chips || '<span style="font-size:11px;color:var(--teal)">✓ Alle velden gevuld</span>'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Data-inzichten: leveranciers in cijfers (klikbaar) ─────────
+function goInsightsVendor(vendorName) {
+  gotoOverzichtWithFilter(null, null, vendorName);
+}
+
+function renderInzichtenVendors() {
+  const el = document.getElementById('inzichtenVendorTable');
+  if (!el) return;
+  const byVendor = {};
+  entries.forEach(e => {
+    const v = (e.vendor || '').trim();
+    if (!v) return;
+    const b = byVendor[v] = byVendor[v] || { n: 0, complete: 0, marginSum: 0, marginN: 0, belowTarget: 0 };
+    b.n++;
+    if (entryIsComplete(e)) b.complete++;
+    if (typeof e.actualMargin === 'number') {
+      b.marginSum += e.actualMargin; b.marginN++;
+      if (e.actualMargin < 0.42) b.belowTarget++;
+    }
+  });
+  const noVendor = entries.filter(e => !(e.vendor || '').trim()).length;
+  const rows = Object.keys(byVendor).map(v => Object.assign({ vendor: v }, byVendor[v]))
+    .sort((a, b) => b.n - a.n);
+  const TOP = 14;
+  const shown = rows.slice(0, TOP);
+  const rest = rows.slice(TOP);
+
+  function fmtPct(x) { return (x * 100).toFixed(1).replace('.', ',') + '%'; }
+  const header = '<div style="display:grid;grid-template-columns:1fr 72px 92px 90px 100px;gap:8px;font-size:10px;font-weight:700;color:var(--ink-low);text-transform:uppercase;letter-spacing:.04em;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:2px">'
+    + '<span>Leverancier</span><span>Artikelen</span><span>Volledig</span><span>Gem. marge</span><span>Onder 42%</span></div>';
+  const body = shown.map(r => {
+    const avg = r.marginN ? r.marginSum / r.marginN : null;
+    const compPct = Math.round(r.complete / r.n * 100);
+    const avgColor = avg == null ? 'var(--ink-low)' : avg >= 0.42 ? 'var(--teal)' : avg >= 0.37 ? 'var(--amber)' : 'var(--red)';
+    return `<div onclick="goInsightsVendor('${r.vendor.replace(/'/g, "\\'")}')" title="Klik: Overzicht gefilterd op ${escAttr(r.vendor)}"
+      style="display:grid;grid-template-columns:1fr 72px 92px 90px 100px;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);align-items:center;cursor:pointer"
+      onmouseenter="this.style.background='var(--fill)'" onmouseleave="this.style.background=''">
+      <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.vendor}</div>
+      <div class="mono" style="font-size:12px">${r.n}</div>
+      <div><span class="badge ${compPct>=90?'badge-ok':compPct>=60?'badge-warn':'badge-error'}" style="font-size:11px">${compPct}%</span></div>
+      <div class="mono" style="font-size:12px;font-weight:700;color:${avgColor}">${avg == null ? '—' : fmtPct(avg)}</div>
+      <div class="mono" style="font-size:12px;color:${r.belowTarget ? 'var(--amber)' : 'var(--ink-low)'}">${r.marginN ? r.belowTarget + ' van ' + r.marginN : '—'}</div>
+    </div>`;
+  }).join('');
+  let footer = '';
+  if (rest.length) {
+    const restN = rest.reduce((s, r) => s + r.n, 0);
+    footer += `<div style="font-size:11px;color:var(--ink-low);padding:8px 0">… en nog ${rest.length} leveranciers met samen ${restN} artikelen</div>`;
+  }
+  if (noVendor) {
+    footer += `<div onclick="gotoOverzichtWithFilter('marge','missing_any',null)" style="font-size:11px;color:var(--amber);padding:6px 0;cursor:pointer" title="Klik: Overzicht met ontbrekende-data-filter">⚠ ${noVendor} artikelen hebben nog géén leverancier — klik om ze te bekijken</div>`;
+  }
+  el.innerHTML = rows.length ? header + body + footer : '<div style="font-size:12px;color:var(--ink-low)">Nog geen artikelen met leverancier.</div>';
 }
 
 // ── Data-inzichten: live datakwaliteit-balken ──────────────────
@@ -1870,8 +1942,8 @@ function renderInzichtenQualityBars() {
   const completenessPct = entries.length ? Math.round(sectionSum / (entries.length * 8) * 100) : 0;
 
   // 3. Garment Supplier-resolutie in Fabric Info
-  const gsTotal = COL_FABRICS.filter(f => f.garmentSupplier).length;
-  const gsResolved = COL_FABRICS.filter(f => f.garmentSupplier && resolveGarmentSupplier(f.garmentSupplier)?.allResolved).length;
+  const gsTotal = masterData.fabrics.filter(f => f.supplier).length;
+  const gsResolved = masterData.fabrics.filter(f => f.supplier && resolveGarmentSupplier(f.supplier)?.allResolved).length;
   const gsPct = gsTotal ? Math.round(gsResolved / gsTotal * 100) : 0;
 
   const rows = [
@@ -2657,6 +2729,9 @@ function openStamQuickFill() {
         { key: 'composition', label: 'Samenstelling', get: function (f) { return f.composition; }, set: function (f, x) { f.composition = x; } },
         { key: 'supplier',    label: 'Leverancier',   listId: 'qf-dl-vendors', get: function (f) { return f.supplier; }, set: function (f, x) { f.supplier = x; } },
         { key: 'weight',      label: 'Gewicht',       get: function (f) { return f.weight; },      set: function (f, x) { f.weight = x; } },
+        { key: 'fabricSupplier', label: 'Stofleverancier', get: function (f) { return f.fabricSupplier; }, set: function (f, x) { f.fabricSupplier = x; } },
+        { key: 'pricePerUnit',   label: 'Prijs/eenheid',   get: function (f) { return f.pricePerUnit; },   set: function (f, x) { f.pricePerUnit = x; } },
+        { key: 'moqBulk',        label: 'MOQ bulk',        get: function (f) { return f.moqBulk; },        set: function (f, x) { f.moqBulk = x; } },
       ],
       datalists: function () { return [{ id: 'qf-dl-vendors', values: (masterData.vendors || []).map(function (v) { return v.name; }).filter(Boolean).sort() }]; },
       onSave: function () { renderStamdata(); },
@@ -3246,9 +3321,14 @@ const STAMDATA_COLUMNS = {
     { key: 'pantone', label: 'Pantone' }, { key: 'fedas', label: 'Fedas' }
   ],
   fabrics: [
-    { key: 'quality', label: 'Kwaliteit' }, { key: 'composition', label: 'Samenstelling' },
-    { key: 'weight', label: 'Gewicht' }, { key: 'supplier', label: 'Leverancier' },
-    { key: 'fabricCode', label: 'Fabric Code' }, { key: 'type', label: 'Type' },
+    { key: 'quality', label: 'Kwaliteit' }, { key: 'productGroup', label: 'Productgroep' },
+    { key: 'composition', label: 'Samenstelling' }, { key: 'weight', label: 'Gewicht' },
+    { key: 'width', label: 'Breedte' }, { key: 'supplier', label: 'Leverancier' },
+    { key: 'fabricSupplier', label: 'Stofleverancier' }, { key: 'fabricCode', label: 'Stofcode' },
+    { key: 'pricePerUnit', label: 'Prijs/eenheid' }, { key: 'moqSampling', label: 'MOQ sampling' },
+    { key: 'moqBulk', label: 'MOQ bulk' }, { key: 'leadtimeGreige', label: 'Leadtime greige' },
+    { key: 'leadtimeFinished', label: 'Leadtime finished' }, { key: 'functionality', label: 'Functionaliteit' },
+    { key: 'washingInfo', label: 'Wasinstructies' }, { key: 'type', label: 'Type' },
     { key: 'remark', label: 'Opmerking' }
   ],
   hsCodes: [
@@ -3930,7 +4010,7 @@ function setStamTab(tab) {
   if (!_keepStamFilter && _stamIssueFilter) _stamIssueFilter = null;
   currentStamTab = tab;
   window._currentStamTab = tab;
-  ['vendors','colours','fabrics','hscodes','fits','colhscodes','colfabrics','colarticlecode'].forEach(t => {
+  ['vendors','colours','fabrics','hscodes','fits','colarticlecode'].forEach(t => {
     const panel = document.getElementById('stam-' + t);
     if (panel) panel.classList.toggle('hidden', t !== tab);
     const btn = document.getElementById('stab-' + t);
@@ -3951,8 +4031,6 @@ function renderStamdata() {
     case 'fabrics':  renderFabrics();  break;
     case 'hscodes':  renderHSCodes();  break;
     case 'fits':     renderFits();     break;
-    case 'colhscodes':      renderColHsCodesStam();     break;
-    case 'colfabrics':      renderColFabricsStam();     break;
     case 'colarticlecode':  renderColArticleCodeStam(); break;
   }
 }
@@ -4254,7 +4332,7 @@ function renderFabrics() {
   const q  = (document.getElementById('fabricSearch')?.value || '').toLowerCase();
   const ft = document.getElementById('fabricType')?.value || '';
   let filtered = masterData.fabrics.filter(f =>
-    (!q || f.quality.toLowerCase().includes(q) || (f.composition||'').toLowerCase().includes(q) || (f.supplier||'').toLowerCase().includes(q)) &&
+    (!q || f.quality.toLowerCase().includes(q) || (f.composition||'').toLowerCase().includes(q) || (f.supplier||'').toLowerCase().includes(q) || (f.fabricSupplier||'').toLowerCase().includes(q) || (String(f.fabricCode||'')).toLowerCase().includes(q)) &&
     (!ft || (f.type||'').toUpperCase().includes(ft))
   );
   filtered = applyStamIssueFilter(filtered, 'fabrics');
@@ -4263,25 +4341,38 @@ function renderFabrics() {
     const fabIssues = [];
     if (!f.composition) fabIssues.push('samenstelling');
     if (!f.supplier)    fabIssues.push('leverancier');
-    if (!f.fabricCode)  fabIssues.push('fabric code');
+    if (!f.fabricCode)  fabIssues.push('stofcode');
     const fabClass = fabIssues.length > 1 ? 'row-error' : fabIssues.length === 1 ? 'row-warn' : '';
+    // Leveranciers-resolver: herkent afkortingen (GP, TS, ...) en toont de koppeling
+    let supTitle = '', supColor = !f.supplier ? 'var(--amber)' : '';
+    if (f.supplier && typeof resolveGarmentSupplier === 'function') {
+      const r = resolveGarmentSupplier(f.supplier);
+      if (r && r.allResolved) { supTitle = '\u{1F504} Gekoppeld aan Leveranciers: ' + r.resolved.join(' / '); }
+      else if (r) { supTitle = '\u26A0 Niet (volledig) herkend in de Leveranciers-stamdata'; supColor = 'var(--amber)'; }
+    }
+    const lt = f.leadtimeFinished || f.leadtimeGreige || '';
     return `<tr class="${fabClass}">
       <td style="font-weight:600;font-size:12px">
         ${f.quality}
+        ${f.productGroup ? `<div style="font-size:10px;color:var(--ink-low)">${f.productGroup}</div>` : ''}
         ${fabIssues.length ? `<div style="margin-top:2px">${fabIssues.map(i=>`<span class="need-update">${i}</span>`).join(' ')}</div>` : ''}
       </td>
-      <td style="font-size:11px;color:${!f.composition?'var(--red)':'var(--ink-mid)'};max-width:200px">${f.composition||'<em>ontbreekt</em>'}</td>
+      <td style="font-size:11px;color:${!f.composition?'var(--red)':'var(--ink-mid)'};max-width:180px">${f.composition||'<em>ontbreekt</em>'}</td>
       <td class="mono" style="font-size:11px;color:${!f.weight?'var(--amber)':''}">${f.weight||'—'}</td>
-      <td style="font-size:12px;color:${!f.supplier?'var(--amber)':''}">${f.supplier||'<em>ontbreekt</em>'}</td>
-      <td class="mono" style="font-size:11px;color:${!f.fabricCode?'var(--amber)':''}">${f.fabricCode||'—'}</td>
+      <td style="font-size:12px;color:${supColor}" title="${escAttr(supTitle)}">${f.supplier||'<em>ontbreekt</em>'}</td>
+      <td style="font-size:11px">${f.fabricSupplier||'—'}</td>
+      <td class="mono" style="font-size:11px;color:${!f.fabricCode?'var(--amber)':''};max-width:140px" title="${escAttr(String(f.fabricCode||''))}">${String(f.fabricCode||'—').slice(0,22)}${String(f.fabricCode||'').length>22?'…':''}</td>
+      <td class="mono" style="font-size:11px">${f.pricePerUnit||'—'}</td>
+      <td class="mono" style="font-size:11px;max-width:110px" title="${escAttr(String(f.moqBulk||''))}">${String(f.moqBulk||'—').slice(0,16)}${String(f.moqBulk||'').length>16?'…':''}</td>
+      <td style="font-size:11px">${lt||'—'}</td>
       <td><span class="badge ${(f.type||'').includes('ACTIVE')?'badge-ok':'badge-blue'}">${f.type||'—'}</span></td>
-      <td style="font-size:11px;color:var(--ink-low);max-width:160px" title="${f.remark||''}">${(f.remark||'').slice(0,50)}${(f.remark||'').length>50?'…':''}</td>
+      <td style="font-size:11px;color:var(--ink-low);max-width:140px" title="${f.remark||''}">${(f.remark||'').slice(0,40)}${(f.remark||'').length>40?'…':''}</td>
       <td style="white-space:nowrap">
         <button class="btn btn-ghost btn-sm" onclick="editFabric(${ri})" title="Bewerken"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
         <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteStam('fabrics',${ri})" title="Verwijderen">✕</button>
       </td>
     </tr>`;
-  }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--ink-low);padding:20px">Geen resultaten</td></tr>';
+  }).join('') || '<tr><td colspan="12" style="text-align:center;color:var(--ink-low);padding:20px">Geen resultaten</td></tr>';
 }
 
 function editFabric(i) {
@@ -4294,7 +4385,7 @@ function editFabric(i) {
       <div class="field col-span-2"><label>Samenstelling</label><input id="m_comp" value="${f.composition||''}"></div>
       <div class="field"><label>Gewicht</label><input id="m_weight" value="${f.weight||''}"></div>
       <div class="field"><label>Leverancier</label><input id="m_supplier" value="${f.supplier||''}"></div>
-      <div class="field"><label>Fabric code leverancier</label><input id="m_fabcode" value="${f.fabricCode||''}"></div>
+      <div class="field"><label>Stofcode</label><input id="m_fabcode" value="${escAttr(f.fabricCode||'')}"></div>
       <div class="field"><label>Type</label>
         <select id="m_type">
           <option ${(f.type||'').includes('ACTIVE')?'selected':''}>ACTIVE</option>
@@ -4302,6 +4393,16 @@ function editFabric(i) {
           <option value="">Beide</option>
         </select>
       </div>
+      <div class="field"><label>Stofleverancier</label><input id="m_fabsupplier" value="${escAttr(f.fabricSupplier||'')}"></div>
+      <div class="field"><label>Productgroep</label><input id="m_prodgroup" value="${escAttr(f.productGroup||'')}" placeholder="bv. SWIM, Jersey, Woven"></div>
+      <div class="field"><label>Breedte</label><input id="m_width" value="${escAttr(f.width!=null?String(f.width):'')}" placeholder="bv. 145"></div>
+      <div class="field"><label>Prijs/eenheid</label><input id="m_price" value="${escAttr(f.pricePerUnit!=null?String(f.pricePerUnit):'')}" placeholder="bv. $4,20"></div>
+      <div class="field"><label>MOQ sampling</label><input id="m_moqsampling" value="${escAttr(f.moqSampling!=null?String(f.moqSampling):'')}"></div>
+      <div class="field"><label>MOQ bulk</label><input id="m_moqbulk" value="${escAttr(f.moqBulk!=null?String(f.moqBulk):'')}" placeholder="bv. 300y p/color"></div>
+      <div class="field"><label>Leadtime greige</label><input id="m_ltgreige" value="${escAttr(f.leadtimeGreige!=null?String(f.leadtimeGreige):'')}"></div>
+      <div class="field"><label>Leadtime finished</label><input id="m_ltfinished" value="${escAttr(f.leadtimeFinished!=null?String(f.leadtimeFinished):'')}" placeholder="bv. 30-45 days"></div>
+      <div class="field col-span-2"><label>Functionaliteit</label><input id="m_functionality" value="${escAttr(f.functionality||'')}" placeholder="bv. Quick Dry"></div>
+      <div class="field col-span-2"><label>Wasinstructies (codes)</label><input id="m_washing" value="${escAttr(f.washingInfo||'')}" placeholder="bv. 2702,2708,2714,2718,2711"></div>
       <div class="field col-span-2"><label>Opmerking</label><textarea id="m_remark" rows="2">${f.remark||''}</textarea></div>
     </div>`;
   document.getElementById('editModal').style.display = 'flex';
@@ -4316,40 +4417,25 @@ function addFabricRow() {
       <div class="field col-span-2"><label>Samenstelling</label><input id="m_comp" placeholder="bv. 90% Recycled Polyester, 10% Elastane"></div>
       <div class="field"><label>Gewicht</label><input id="m_weight" placeholder="bv. 180GSM"></div>
       <div class="field"><label>Leverancier</label><input id="m_supplier" placeholder="bv. Feilikang"></div>
-      <div class="field"><label>Fabric code leverancier</label><input id="m_fabcode"></div>
+      <div class="field"><label>Stofcode</label><input id="m_fabcode"></div>
       <div class="field"><label>Type</label><select id="m_type"><option>ACTIVE</option><option>URBAN</option><option value="">Beide</option></select></div>
+      <div class="field"><label>Stofleverancier</label><input id="m_fabsupplier" placeholder="bv. ASSAB"></div>
+      <div class="field"><label>Productgroep</label><input id="m_prodgroup" placeholder="bv. SWIM, Jersey, Woven"></div>
+      <div class="field"><label>Breedte</label><input id="m_width" placeholder="bv. 145"></div>
+      <div class="field"><label>Prijs/eenheid</label><input id="m_price" placeholder="bv. $4,20"></div>
+      <div class="field"><label>MOQ sampling</label><input id="m_moqsampling"></div>
+      <div class="field"><label>MOQ bulk</label><input id="m_moqbulk" placeholder="bv. 300y p/color"></div>
+      <div class="field"><label>Leadtime greige</label><input id="m_ltgreige"></div>
+      <div class="field"><label>Leadtime finished</label><input id="m_ltfinished" placeholder="bv. 30-45 days"></div>
+      <div class="field col-span-2"><label>Functionaliteit</label><input id="m_functionality" placeholder="bv. Quick Dry"></div>
+      <div class="field col-span-2"><label>Wasinstructies (codes)</label><input id="m_washing" placeholder="bv. 2702,2708,2714,2718,2711"></div>
       <div class="field col-span-2"><label>Opmerking</label><textarea id="m_remark" rows="2"></textarea></div>
     </div>`;
   document.getElementById('editModal').style.display = 'flex';
 }
 
 // ── HS CODES ─────────────────────────────────────────────────
-// ── Collectielijst stamdata: HS Codes (alleen-lezen) ──────────
-function renderColHsCodesStam() {
-  const q = (document.getElementById('colHsSearch')?.value || '').toLowerCase();
-  const filtered = COL_HSCODES.filter(h =>
-    !q || h.code.includes(q) || (h.descEN||'').toLowerCase().includes(q) || (h.category||'').toLowerCase().includes(q)
-  );
-  document.getElementById('colHsCodesBody').innerHTML = filtered.slice(0,100).map(h => `<tr>
-      <td class="mono" style="font-weight:700;white-space:nowrap">${h.code}</td>
-      <td style="font-size:12px">${h.descEN||'—'}</td>
-      <td style="font-size:11px;color:var(--ink-mid)">${h.category||'—'}</td>
-      <td class="mono" style="font-size:11px">${h.weight !== null ? h.weight+'kg' : '—'}</td>
-    </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--ink-low);padding:16px">Geen resultaten</td></tr>';
-  if (filtered.length > 100) {
-    document.getElementById('colHsCodesBody').innerHTML +=
-      `<tr><td colspan="4" style="text-align:center;color:var(--ink-low);padding:10px;font-size:12px">+ ${filtered.length-100} meer — verfijn je zoekopdracht</td></tr>`;
-  }
-}
-
-function exportColHsCodesCSV() {
-  exportGenericCSV(COL_HSCODES, [
-    { key: 'code', label: 'Code' }, { key: 'descEN', label: 'Omschrijving (EN)' },
-    { key: 'category', label: 'Categorie' }, { key: 'weight', label: 'Gewicht (kg)' }
-  ], 'brunotti_collectielijst_hscodes');
-}
-
-// ── Collectielijst stamdata: Fabric Info (alleen-lezen) ───────
+// ── Leveranciers-resolver (gebruikt door Stoffen-stamdata) ─────
 // Herkent afkortingen als "GP", "TS", "FEILIKANG" en koppelt ze aan de
 // volledige naam uit de Leveranciers-stamdata (Calculatielijst).
 const GARMENT_SUPPLIER_OVERRIDES = {
@@ -4371,51 +4457,6 @@ function resolveGarmentSupplier(raw) {
   return { parts, resolved, allResolved: resolved.every(r => r !== null) };
 }
 
-function renderColFabricsStam() {
-  const q = (document.getElementById('colFabricSearch')?.value || '').toLowerCase();
-  const filtered = COL_FABRICS.filter(f =>
-    !q || (f.quality||'').toLowerCase().includes(q) || (f.garmentSupplier||'').toLowerCase().includes(q) || (f.composition||'').toLowerCase().includes(q)
-  );
-  document.getElementById('colFabricsBody').innerHTML = filtered.slice(0,100).map(f => {
-    const r = resolveGarmentSupplier(f.garmentSupplier);
-    let supplierCell = '—';
-    if (r) {
-      if (r.allResolved) {
-        supplierCell = `<span style="color:var(--teal)" title="🔄 gekoppeld aan Leveranciers">${r.resolved.join(' / ')}</span>`;
-      } else {
-        supplierCell = `<span style="color:var(--amber)" title="Niet (volledig) herkend in Leveranciers">${f.garmentSupplier}</span>`;
-      }
-    }
-    return `<tr>
-      <td style="font-size:12px;font-weight:600">${f.quality||'—'}</td>
-      <td style="font-size:11px">${supplierCell}</td>
-      <td style="font-size:11px;color:var(--ink-mid)">${f.composition||'—'}</td>
-      <td class="mono" style="font-size:11px">${f.width||'—'}</td>
-      <td class="mono" style="font-size:11px">${f.weight||'—'}</td>
-      <td class="mono" style="font-size:11px">${f.pricePerUnit||'—'}</td>
-      <td class="mono" style="font-size:11px">${f.moqBulk||'—'}</td>
-      <td style="font-size:11px">${f.leadtimeFinished||'—'}</td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--ink-low);padding:16px">Geen resultaten</td></tr>';
-  if (filtered.length > 100) {
-    document.getElementById('colFabricsBody').innerHTML +=
-      `<tr><td colspan="8" style="text-align:center;color:var(--ink-low);padding:10px;font-size:12px">+ ${filtered.length-100} meer — verfijn je zoekopdracht</td></tr>`;
-  }
-}
-
-function exportColFabricsCSV() {
-  exportGenericCSV(COL_FABRICS, [
-    { key: 'quality', label: 'Kwaliteit' }, { key: 'productGroup', label: 'Productgroep' },
-    { key: 'garmentSupplier', label: 'Garment Supplier' }, { key: 'fabricSupplier', label: 'Fabric Supplier' },
-    { key: 'fabricCodeSupplier', label: 'Fabric Code' }, { key: 'composition', label: 'Samenstelling' },
-    { key: 'width', label: 'Breedte' }, { key: 'weight', label: 'Gewicht' },
-    { key: 'functionality', label: 'Functionaliteit' }, { key: 'pricePerUnit', label: 'Prijs' },
-    { key: 'moqSampling', label: 'MOQ Sampling' }, { key: 'moqBulk', label: 'MOQ Bulk' },
-    { key: 'leadtimeGreige', label: 'Leadtime Greige' }, { key: 'leadtimeFinished', label: 'Leadtime Finished' },
-    { key: 'washingInfo', label: 'Wasinstructie' }
-  ], 'brunotti_collectielijst_fabricinfo');
-}
-
 // ── Collectielijst stamdata: Artikelcode-decoder (alleen-lezen) ──
 function renderColArticleCodeStam() {
   const q = (document.getElementById('acGroupSearch')?.value || '').toLowerCase();
@@ -4433,14 +4474,17 @@ function renderColArticleCodeStam() {
 function renderHSCodes() {
   const q = (document.getElementById('hsSearch')?.value || '').toLowerCase();
   let filtered = masterData.hsCodes.filter(h =>
-    !q || h.code.includes(q) || (h.descNL||'').toLowerCase().includes(q) || (h.category||'').toLowerCase().includes(q)
+    !q || h.code.includes(q) || (h.descNL||'').toLowerCase().includes(q) || (h.descEN||'').toLowerCase().includes(q) || (h.category||'').toLowerCase().includes(q)
   );
   filtered = applyStamIssueFilter(filtered, 'hscodes');
   document.getElementById('hsTableBody').innerHTML = filtered.slice(0,80).map((h,fi) => {
     const ri = masterData.hsCodes.indexOf(h);
+    const en = h.descEN || '';
+    const enShort = en.length > 70 ? en.slice(0, 70) + '…' : en;
     return `<tr>
       <td class="mono" style="font-weight:700;white-space:nowrap">${h.code}</td>
       <td style="font-size:12px">${h.descNL||'—'}</td>
+      <td style="font-size:11px;color:var(--ink-mid)" title="${escAttr(en)}">${enShort||'—'}</td>
       <td style="font-size:11px;color:var(--ink-mid)">${h.category||'—'}</td>
       <td class="mono" style="font-size:11px">${h.weight !== null ? h.weight+'kg' : '—'}</td>
       <td style="white-space:nowrap">
@@ -4451,7 +4495,7 @@ function renderHSCodes() {
   }).join('');
   if (filtered.length > 80) {
     document.getElementById('hsTableBody').innerHTML +=
-      `<tr><td colspan="5" style="text-align:center;color:var(--ink-low);padding:10px;font-size:12px">+ ${filtered.length-80} meer — verfijn je zoekopdracht</td></tr>`;
+      `<tr><td colspan="6" style="text-align:center;color:var(--ink-low);padding:10px;font-size:12px">+ ${filtered.length-80} meer — verfijn je zoekopdracht</td></tr>`;
   }
 }
 
@@ -4550,7 +4594,12 @@ function saveModalEdit() {
     if (!quality) { showToast('⚠ Kwaliteit naam is verplicht'); return; }
     newRecord = { quality, composition: g('m_comp'), weight: g('m_weight'),
                   supplier: g('m_supplier'), fabricCode: g('m_fabcode'),
-                  type: g('m_type'), remark: g('m_remark') };
+                  type: g('m_type'), remark: g('m_remark'),
+                  productGroup: g('m_prodgroup'), fabricSupplier: g('m_fabsupplier'),
+                  width: g('m_width'), pricePerUnit: g('m_price'),
+                  moqSampling: g('m_moqsampling'), moqBulk: g('m_moqbulk'),
+                  leadtimeGreige: g('m_ltgreige'), leadtimeFinished: g('m_ltfinished'),
+                  functionality: g('m_functionality'), washingInfo: g('m_washing') };
   } else if (type === 'hsCodes') {
     const code = g('m_code');
     if (!code) { showToast('⚠ HS Code is verplicht'); return; }
@@ -4564,7 +4613,8 @@ function saveModalEdit() {
 
   if (newRecord) {
     if (index >= 0) {
-      masterData[type][index] = newRecord;
+      // Samenvoegen i.p.v. vervangen: velden die niet in de modal staan blijven behouden
+      masterData[type][index] = Object.assign({}, masterData[type][index], newRecord);
       showToast('✓ Stamdata bijgewerkt');
     } else {
       masterData[type].push(newRecord);
@@ -5253,7 +5303,99 @@ document.addEventListener('click', e => {
   if (saved) {
     try { masterData = JSON.parse(saved); } catch(e) {}
   }
+  // Eenmalige samenvoeging: Collectielijst-HS-codes en -Fabric Info in de
+  // bewerkbare stamdata (beide idempotent)
+  const _hsM = migrateColHsCodesIntoMaster();
+  const _fabM = migrateColFabricsIntoMaster();
+  if (_hsM || _fabM) {
+    try { localStorage.setItem('brunotti_ss27_master', JSON.stringify(masterData)); } catch(e) {}
+  }
 })();
+
+// ── Stoffen samenvoegen naar één bron ──────────────────────────
+// Vult masterData.fabrics aan met de rijkere velden uit de (voorheen aparte,
+// alleen-lezen) Collectielijst Fabric Info: stofleverancier, echte stofcode,
+// breedte, prijs, MOQ's, leadtimes, functionaliteit en wasinstructies.
+// Bestaande waarden worden NOOIT overschreven. Bijzonderheid: het veld
+// "Fabric Code" bevatte historisch vaak de stofleveranciersnaam — die verhuist
+// dan naar het nieuwe veld Stofleverancier en de echte code komt op zijn plek.
+// Idempotent: draait veilig bij elke start.
+function migrateColFabricsIntoMaster() {
+  if (typeof COL_FABRICS === 'undefined' || !masterData) return false;
+  if (!Array.isArray(masterData.fabrics)) masterData.fabrics = [];
+  let changed = false;
+  function fkey(q, s) { return String(q||'').trim().toLowerCase() + '||' + String(s||'').trim().toLowerCase(); }
+  function fEmpty(v) { return v == null || String(v).trim() === ''; }
+  // Bron-records per (kwaliteit, leverancier); duplicaten blijven in volgorde beschikbaar
+  const pool = {};
+  COL_FABRICS.forEach(src => { const k = fkey(src.quality, src.garmentSupplier); (pool[k] = pool[k] || []).push(src); });
+  const FILL = ['productGroup','fabricSupplier','width','pricePerUnit','moqSampling','moqBulk','leadtimeGreige','leadtimeFinished','functionality','washingInfo','composition','weight'];
+  masterData.fabrics.forEach(dst => {
+    const k = fkey(dst.quality, dst.supplier);
+    const src = (pool[k] && pool[k].length) ? pool[k].shift() : null;
+    if (!src) return;
+    if (!fEmpty(dst.fabricCode) && !fEmpty(src.fabricSupplier) &&
+        normSupplierStr(dst.fabricCode) === normSupplierStr(src.fabricSupplier)) {
+      if (fEmpty(dst.fabricSupplier)) { dst.fabricSupplier = dst.fabricCode; changed = true; }
+      if (!fEmpty(src.fabricCodeSupplier)) { dst.fabricCode = src.fabricCodeSupplier; changed = true; }
+    } else if (fEmpty(dst.fabricCode) && !fEmpty(src.fabricCodeSupplier)) {
+      dst.fabricCode = src.fabricCodeSupplier; changed = true;
+    }
+    FILL.forEach(f => { if (fEmpty(dst[f]) && !fEmpty(src[f])) { dst[f] = src[f]; changed = true; } });
+  });
+  // Bron-records zonder match in de bewerkbare set → toevoegen als nieuwe stof
+  Object.keys(pool).forEach(k => pool[k].forEach(src => {
+    if (fEmpty(src.quality)) return;
+    masterData.fabrics.push({
+      quality: src.quality, composition: src.composition || '', weight: (src.weight != null ? src.weight : ''),
+      supplier: src.garmentSupplier || '', fabricCode: src.fabricCodeSupplier || '', type: '', remark: '',
+      productGroup: src.productGroup || '', fabricSupplier: src.fabricSupplier || '',
+      width: (src.width != null ? src.width : ''), pricePerUnit: (src.pricePerUnit != null ? src.pricePerUnit : ''),
+      moqSampling: (src.moqSampling != null ? src.moqSampling : ''), moqBulk: (src.moqBulk != null ? src.moqBulk : ''),
+      leadtimeGreige: (src.leadtimeGreige != null ? src.leadtimeGreige : ''), leadtimeFinished: (src.leadtimeFinished != null ? src.leadtimeFinished : ''),
+      functionality: src.functionality || '', washingInfo: src.washingInfo || ''
+    });
+    changed = true;
+  }));
+  return changed;
+}
+
+// ── HS Codes samenvoegen naar één bron ─────────────────────────
+// Vult masterData.hsCodes aan met codes/velden uit de (voorheen aparte, alleen-lezen)
+// Collectielijst-set. Bestaande waarden worden NOOIT overschreven — alleen ontbrekende
+// codes toegevoegd en lege velden aangevuld. Idempotent: draait veilig bij elke start.
+function migrateColHsCodesIntoMaster() {
+  if (typeof COL_HSCODES === 'undefined' || !masterData) return false;
+  if (!Array.isArray(masterData.hsCodes)) masterData.hsCodes = [];
+  let changed = false;
+  const byCode = {};
+  masterData.hsCodes.forEach(h => { if (h && h.code != null) byCode[String(h.code).trim()] = h; });
+  COL_HSCODES.forEach(src => {
+    const code = String(src.code || '').trim();
+    if (!code) return;
+    const dst = byCode[code];
+    if (!dst) {
+      const rec = {
+        code: code,
+        descNL: src.descNL || '',
+        descEN: src.descEN || '',
+        category: (src.category != null ? String(src.category).trim() : ''),
+        weight: (src.weight != null ? src.weight : null)
+      };
+      masterData.hsCodes.push(rec);
+      byCode[code] = rec;
+      changed = true;
+    } else {
+      if (!dst.descEN && src.descEN) { dst.descEN = src.descEN; changed = true; }
+      if (!dst.descNL && src.descNL) { dst.descNL = src.descNL; changed = true; }
+      if ((dst.category == null || String(dst.category).trim() === '') && src.category != null && String(src.category).trim() !== '') {
+        dst.category = String(src.category).trim(); changed = true;
+      }
+      if ((dst.weight == null || dst.weight === '') && src.weight != null) { dst.weight = src.weight; changed = true; }
+    }
+  });
+  return changed;
+}
 
 // ══ DOWNLOAD ZIP ═════════════════════════════════════════════
 async function downloadZip() {
@@ -5733,10 +5875,23 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
-    version: '2.4',
+    version: '2.5',
     date: '2026-07-06',
     author: 'Martijn Cornelissen',
     active: true,
+    features: [
+      { name: 'Data-inzichten uitgebreid met twee live overzichten', desc: 'Onder Info → Data-inzichten: "Stamdata-gaten" toont per categorie live welke velden nog ontbreken, met een %-compleet-badge en klikbare chips die direct naar de gefilterde stamdata-tabel springen. "Leveranciers in cijfers" toont per leverancier het aantal artikelen, de datavolledigheid, de gemiddelde marge en hoeveel artikelen onder de 42%-target zitten — klik op een regel om het Overzicht op die leverancier te filteren. Een voorproefje van de inkooplijst-analyse uit fase 3', tab: 'info', icon: '🔍' },
+      { name: 'Stoffen samengevoegd naar één bewerkbare versie', desc: 'De alleen-lezen "Fabric Info"-tab is verdwenen: alle rijke stofinformatie (stofleverancier, echte stofcode, breedte, prijs, MOQ sampling én bulk, leadtimes, functionaliteit, wasinstructies, productgroep) zit nu ín de bewerkbare Stoffen-stamdata — volledig bewerkbaar en syncend naar Drive en de Google Sheet. Slimmigheid bij de migratie: waar het oude "Fabric Code"-veld eigenlijk de stofleveranciersnaam bevatte, is die naar het nieuwe Stofleverancier-veld verhuisd en staat de échte stofcode nu op zijn plek. Eigen bewerkingen worden nooit overschreven', tab: 'stamdata', icon: '🧵' },
+      { name: 'Stoffen-kwaliteit meetbaar naar 100%', desc: 'Vijf nieuwe klikbare "Ontbrekende velden"-chips in de kwaliteitsbanner (stofleverancier, stofcode, prijs, MOQ bulk, leadtime), drie extra kolommen in Snel aanvullen, en de leverancierskolom toont nu per stof of de naam herkend wordt in de Leveranciers-stamdata (hover voor de koppeling). De resolver-statistiek in Data-inzichten meet voortaan de live bewerkbare data', tab: 'stamdata', icon: '📏' },
+      { name: 'HS Codes samengevoegd naar één versie', desc: 'De aparte alleen-lezen "HS Codes"-tab uit de Collectielijst-import is verdwenen: er is nu één bewerkbare HS Codes-stamdata die synct naar Drive en de Google Sheet — net zoals de Sheet het al toonde. Bij het opstarten voegt de app automatisch codes of velden toe die nog zouden ontbreken (bestaande waarden en eigen bewerkingen worden nooit overschreven)', tab: 'stamdata', icon: '🔀' },
+      { name: 'EN-omschrijving zichtbaar in de HS Codes-tabel', desc: 'De Engelse douane-omschrijving (voorheen alleen in de Collectielijst-tab te zien) staat nu als kolom in de bewerkbare tabel — lange teksten netjes afgekort met de volledige tekst als tooltip — en het zoekveld zoekt er ook op. Bewerken kon al via het potloodje', tab: 'stamdata', icon: '🇬🇧' },
+    ]
+  },
+  {
+    version: '2.4',
+    date: '2026-07-06',
+    author: 'Martijn Cornelissen',
+    active: false,
     features: [
       { name: 'Uitgebreide statusdetails bij de cloud-badge', desc: 'Hover (of tik op mobiel) over het wolkje in de header voor een volledig statuspaneel: huidige status met uitleg, tijdstip van de laatste synchronisatie, auto-sync aan/uit, of er nog openstaande wijzigingen zijn, aantal artikelen en de app-versie — live bijgewerkt terwijl het paneel open staat', tab: null, icon: '☁' },
       { name: 'Snel aanvullen (batch-edit op gefilterde records)', desc: 'Nieuwe 🖉-knop in het Calculatielijst-Overzicht en in de stamdata-filterbalk: vul ontbrekende data (FOB, kwaliteit, segment, MOQ, leveranciersvelden, enz.) per rij of per hele kolom in één keer aan. Met live marge-preview terwijl je een FOB-prijs typt, autocomplete, en komma óf punt als decimaalteken', tab: 'overzicht', icon: '🖉' },
@@ -6088,6 +6243,11 @@ function getStamdataSummaryItems(tab) {
       { id:'no_composition', label:'Geen samenstelling',  type:'warn',  test:function(x){return !x.composition;} },
       { id:'no_supplier',    label:'Geen leverancier',    type:'warn',  test:function(x){return !x.supplier;} },
       { id:'no_weight',      label:'Geen gewicht',        type:'warn',  test:function(x){return !x.weight;} },
+      { id:'no_fabsupplier', label:'Geen stofleverancier',type:'warn',  test:function(x){return x.fabricSupplier==null||String(x.fabricSupplier).trim()==='';} },
+      { id:'no_fabcode',     label:'Geen stofcode',       type:'warn',  test:function(x){return x.fabricCode==null||String(x.fabricCode).trim()==='';} },
+      { id:'no_price',       label:'Geen prijs',          type:'warn',  test:function(x){return x.pricePerUnit==null||String(x.pricePerUnit).trim()==='';} },
+      { id:'no_moqbulk',     label:'Geen MOQ bulk',       type:'warn',  test:function(x){return x.moqBulk==null||String(x.moqBulk).trim()==='';} },
+      { id:'no_leadtime',    label:'Geen leadtime',       type:'warn',  test:function(x){return (x.leadtimeFinished==null||String(x.leadtimeFinished).trim()==='')&&(x.leadtimeGreige==null||String(x.leadtimeGreige).trim()==='');} },
     ],
     hscodes: [
       { id:'no_code',     label:'Geen code',            type:'error', test:function(x){return !x.code;} },
@@ -6632,6 +6792,10 @@ async function loadFromSharePoint(silent) {
 
         entries    = data.entries;
         if (data.masterData) masterData = data.masterData;
+        // HS-codes en stoffen samenvoegen als de teamversie nog codes/velden mist (idempotent)
+        const _hsm = migrateColHsCodesIntoMaster();
+        const _fbm = migrateColFabricsIntoMaster();
+        const hsMigrated = _hsm || _fbm;
         try {
           localStorage.setItem('brunotti_ss27_entries', JSON.stringify(entries));
           localStorage.setItem('brunotti_ss27_master',  JSON.stringify(masterData));
@@ -6641,6 +6805,7 @@ async function loadFromSharePoint(silent) {
           console.warn('Lokale cache vol na cloud-load:', cacheErr);
         }
         markSynced();
+        if (hsMigrated && typeof persistData === 'function') persistData();
         filteredEntries = [...entries];
         updateOverview();
         setSyncStatus('online', 'Geladen', 'Geladen vanuit Drive · ' + (data.savedBy || '?') + ' · ' + new Date(data.savedAt).toLocaleTimeString('nl-NL'));
