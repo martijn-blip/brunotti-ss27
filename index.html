@@ -506,6 +506,7 @@
   <div class="tab active" onclick="switchTab('stamdata')">📂 Stamdata</div>
   <div class="tab" onclick="switchTab('calculatielijst')">📊 Calculatielijst</div>
   <div class="tab" onclick="switchTab('collectielijst')">📦 Collectielijst</div>
+  <div class="tab" onclick="switchTab('export')">⬇ Export</div>
   <div class="tab" onclick="switchTab('info')" style="margin-left:auto">ℹ️ Info</div>
   <div class="tab" onclick="switchTab('versies')">⚙ Instellingen</div>
 </div>
@@ -1341,11 +1342,56 @@
 </div>
 
 <!-- ══ TAB: INFO ════════════════════════════════════════════ -->
+<!-- ══ TAB: EXPORT ═══════════════════════════════════════════ -->
+<div id="tab-export" class="main hidden">
+
+  <!-- ── Shopify export ── -->
+  <div class="card" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:6px">
+      <div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:3px">🛒 Shopify product-import (CSV)</div>
+        <div style="font-size:12px;color:var(--ink-low);max-width:640px;line-height:1.5">Genereert het officiële Shopify import-formaat: één product per stijl+kleur, met de maten uit de Collectielijst als varianten (Option: Size). Merk staat op "Brunotti" — leveranciersnamen gaan nooit mee naar de webshop. Producten worden als <b>concept (draft)</b> aangemaakt, dus niets gaat automatisch live.</div>
+      </div>
+    </div>
+    <div id="shopifyStats" style="display:flex;gap:14px;flex-wrap:wrap;margin:12px 0;font-size:11.5px"></div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="exportShopifyCSV()">⬇ Download Shopify CSV</button>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+        <input type="checkbox" id="shopifyOnlyApproved" style="width:auto" onchange="renderExportTab()">
+        Alleen goedgekeurde artikelen
+      </label>
+    </div>
+  </div>
+
+  <!-- ── Power BI export ── -->
+  <div class="card" style="margin-bottom:16px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:3px">📊 Power BI dataset (CSV)</div>
+    <div style="font-size:12px;color:var(--ink-low);max-width:640px;line-height:1.5;margin-bottom:12px">Platte, BI-klare dataset: één rij per stijl+kleur met een vaste sleutelkolom (<code>key</code>), stabiele Engelse kolomnamen, ISO-datums en getallen als échte getallen (punt-decimalen, geen €-tekens). Direct te laden in Power BI via "Get data → Text/CSV". Dezelfde structuur komt later ook als vaste BI_Export-tab in de Google Sheet, zodat Power BI automatisch ververst na elke sync.</div>
+    <button class="btn btn-primary btn-sm" onclick="exportBiCSV()">⬇ Download Power BI CSV</button>
+  </div>
+
+  <!-- ── Bestaande exports ── -->
+  <div class="card">
+    <div style="font-size:14px;font-weight:700;margin-bottom:3px">📁 Overige exports</div>
+    <div style="font-size:12px;color:var(--ink-low);margin-bottom:12px">De bestaande exports, hier verzameld voor het gemak.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV()">Calculatielijst (CSV)</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportVendorsCSV()">Leveranciers (CSV)</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportColoursCSV()">Kleuren (CSV)</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportFabricsCSV()">Stoffen (CSV)</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportHsCodesCSV()">HS-codes (CSV)</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportFitsCSV()">Pasvormen (CSV)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB: INFO ══════════════════════════════════════════════ -->
 <div id="tab-info" class="main hidden">
 
   <div style="display:flex;gap:8px;margin-bottom:16px">
     <button class="btn btn-primary btn-sm info-tab active" onclick="setInfoTab('inzichten')" id="infotab-inzichten">🔍 Data-inzichten</button>
     <button class="btn btn-ghost btn-sm info-tab" onclick="setInfoTab('aanbevelingen')" id="infotab-aanbevelingen">✅ Aanbevelingen &amp; Actiepunten</button>
+    <button class="btn btn-ghost btn-sm info-tab" onclick="setInfoTab('roadmap')" id="infotab-roadmap">🗺️ Roadmap</button>
     <button class="btn btn-ghost btn-sm info-tab" onclick="setInfoTab('changelog')" id="infotab-changelog">📋 Changelog</button>
   </div>
 
@@ -1408,6 +1454,26 @@
       </div>
       <div id="meetingTodoList" style="font-size:13px"></div>
     </div>
+  </div>
+
+  <!-- ── Sub-tab: Roadmap & Verbeterpunten ─────────────────────── -->
+  <div id="info-roadmap" class="hidden">
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px">
+        <div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:2px">🗺️ Roadmap &amp; verbeterpunten</div>
+          <div style="font-size:11px;color:var(--ink-low)">Uit de app-doorlichting van 6 juli 2026. Vink af wat gedaan of besloten is, en pas de prioriteit aan — alles wordt bewaard. Punten met 🗣️ zijn beslispunten voor de meeting met inkoop, productie, BI en online.</div>
+        </div>
+        <div id="roadmapProgress" style="font-size:11px;font-weight:700;color:var(--teal);white-space:nowrap"></div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" id="roadmapFilter-alles" onclick="setRoadmapFilter('alles')">Alles</button>
+        <button class="btn btn-ghost btn-sm" id="roadmapFilter-open" onclick="setRoadmapFilter('open')">Open</button>
+        <button class="btn btn-ghost btn-sm" id="roadmapFilter-klaar" onclick="setRoadmapFilter('klaar')">✓ Afgevinkt</button>
+        <button class="btn btn-ghost btn-sm" id="roadmapFilter-hoog" onclick="setRoadmapFilter('hoog')">🔴 Alleen hoog</button>
+      </div>
+    </div>
+    <div id="roadmapList"></div>
   </div>
 
   <!-- ── Sub-tab: Changelog ────────────────────────────────────── -->
@@ -1713,16 +1779,17 @@ let _lastColSubTab = 'invoer';
 let _lastInfoSubTab = 'inzichten';
 
 function switchTab(t) {
-  ['stamdata','calculatielijst','collectielijst','info','versies'].forEach(id => {
+  ['stamdata','calculatielijst','collectielijst','export','info','versies'].forEach(id => {
     document.getElementById('tab-'+id).classList.toggle('hidden', id !== t);
   });
   document.querySelectorAll('.tabs > .tab').forEach((el,i) => {
-    el.classList.toggle('active', ['stamdata','calculatielijst','collectielijst','info','versies'][i] === t);
+    el.classList.toggle('active', ['stamdata','calculatielijst','collectielijst','export','info','versies'][i] === t);
   });
   if (t === 'stamdata')        { renderStamdata(); }
   if (t === 'versies')         { renderVersions(); }
   if (t === 'collectielijst')  { setColTab(_lastColSubTab); }
   if (t === 'calculatielijst') { setCalcTab(_lastCalcSubTab); }
+  if (t === 'export')          { renderExportTab(); }
   if (t === 'info')            { setInfoTab(_lastInfoSubTab); }
   // Track history
   if (_tabHistory[_tabHistory.length - 1] !== t) {
@@ -1735,7 +1802,7 @@ function switchTab(t) {
 // ── Info sub-tabs: Data-inzichten / Aanbevelingen / Changelog ──
 function setInfoTab(sub) {
   _lastInfoSubTab = sub;
-  ['inzichten','aanbevelingen','changelog'].forEach(s => {
+  ['inzichten','aanbevelingen','roadmap','changelog'].forEach(s => {
     const panel = document.getElementById('info-' + s);
     if (panel) panel.classList.toggle('hidden', s !== sub);
     const btn = document.getElementById('infotab-' + s);
@@ -1746,6 +1813,7 @@ function setInfoTab(sub) {
   });
   if (sub === 'inzichten')     { renderInzichtenQualityBars(); }
   if (sub === 'aanbevelingen') { renderRecCheckList(); renderMeetingTodos(); }
+  if (sub === 'roadmap')       { renderRoadmap(); }
   if (sub === 'changelog')     { renderChangelog(); }
 }
 
@@ -2631,6 +2699,136 @@ function exportCSVData(data, filename) {
 
 function exportCSV() {
   exportCSVData(entries, 'brunotti_ss27');
+}
+
+// ══ EXPORT-TAB: SHOPIFY & POWER BI ═════════════════════════════
+
+function csvCell(v) {
+  return v === null || v === undefined ? '' : '"' + String(v).replace(/"/g, '""') + '"';
+}
+function csvNum(v) {
+  // Echte getallen, ongeqoot, punt-decimaal — zodat Power BI ze als numeriek typeert
+  return (v === null || v === undefined || v === '' || isNaN(v)) ? '' : String(Number(v));
+}
+function slugify(s) {
+  return String(s || '').toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+function exportPool() {
+  const only = document.getElementById('shopifyOnlyApproved')?.checked;
+  return only ? entries.filter(e => e.status === 'approved') : entries.filter(e => e.status !== 'cancelled');
+}
+
+// ── Shopify: één product per stijl+kleur, maten als varianten ──
+function buildShopifyRows(pool) {
+  const HEADERS = ['Handle','Title','Body (HTML)','Vendor','Type','Tags','Published',
+    'Option1 Name','Option1 Value','Variant SKU','Variant Grams',
+    'Variant Inventory Policy','Variant Fulfillment Service','Variant Price',
+    'Variant Requires Shipping','Variant Taxable','Variant Barcode','Status'];
+  const rows = [HEADERS];
+  pool.forEach(e => {
+    const col     = e.collectie || {};
+    const si      = col.styleInfo || {};
+    const sizes   = si.sizeRange ? String(si.sizeRange).split('|').map(s => s.trim()).filter(Boolean) : ['One Size'];
+    const handle  = slugify(`${e.styleName}-${e.styleNumber}-${e.colourNumber}`);
+    const title   = `${e.styleName || ''}${e.colourName ? ' - ' + e.colourName : ''}`;
+    const bodyBits = [];
+    if (si.compositionShell) bodyBits.push(`<p>Materiaal: ${si.compositionShell}</p>`);
+    if (si.fabricName)       bodyBits.push(`<p>Stof: ${si.fabricName}</p>`);
+    const tags = ['SS27', e.collectieGroep, e.group, e.subgroup, e.segment, e.quality]
+      .filter(Boolean).join(', ');
+    const grams   = col.weight?.weight ? Math.round(Number(col.weight.weight) * 1000) : '';
+    const barcode = col.hangtags?.mainBarcode || '';
+    sizes.forEach((size, i) => {
+      rows.push([
+        handle,
+        i === 0 ? title : '',
+        i === 0 ? bodyBits.join('') : '',
+        i === 0 ? 'Brunotti' : '',
+        i === 0 ? (e.subgroup || '') : '',
+        i === 0 ? tags : '',
+        i === 0 ? 'FALSE' : '',
+        'Size', size,
+        `${e.styleNumber}-${e.colourNumber}-${size}`,
+        grams,
+        'deny', 'manual',
+        e.retailEuro != null && e.retailEuro !== '' ? Number(e.retailEuro).toFixed(2) : '',
+        'TRUE', 'TRUE',
+        barcode,
+        i === 0 ? 'draft' : '',
+      ]);
+    });
+  });
+  return rows;
+}
+
+function exportShopifyCSV() {
+  const pool = exportPool();
+  if (!pool.length) { showToast('Geen artikelen in de selectie — check het "alleen goedgekeurd"-filter'); return; }
+  const rows = buildShopifyRows(pool);
+  const csv = '\uFEFF' + rows.map(r => r.map(csvCell).join(',')).join('\n');
+  downloadCSVString(csv, 'brunotti_ss27_shopify_import');
+  showToast(`⬇ Shopify CSV: ${pool.length} producten, ${rows.length - 1} varianten`);
+}
+
+// ── Power BI: platte dataset, vaste sleutel, getypeerde kolommen ──
+function buildBiRows(pool) {
+  const HEADERS = ['key','style_number','style_name','season','vendor','collection_group',
+    'product_group','subgroup','quality','segment','color_seq','colour_number','colour_name',
+    'size_range','fabric_name','composition','fob_cost','supplier_quote_1',
+    'last_purchase_price','moq','wholesale_euro','vvp_euro','retail_euro',
+    'target_margin','actual_margin','status','saved_at','updated_at','exported_at'];
+  const now = new Date().toISOString();
+  const rows = [HEADERS.map(csvCell).join(',')];
+  pool.forEach(e => {
+    const si = e.collectie?.styleInfo || {};
+    rows.push([
+      csvCell(`${e.styleNumber}_${e.colourNumber}`),
+      csvCell(e.styleNumber), csvCell(e.styleName), csvCell(e.season || 'SS27'),
+      csvCell(e.vendor), csvCell(e.collectieGroep), csvCell(e.group), csvCell(e.subgroup),
+      csvCell(e.quality), csvCell(e.segment),
+      csvNum(e.colorSeq), csvCell(e.colourNumber), csvCell(e.colourName),
+      csvCell(si.sizeRange), csvCell(si.fabricName), csvCell(si.compositionShell),
+      csvNum(e.fobCost), csvNum(e.supplierQuote1), csvNum(e.lastPurchasePrice), csvNum(e.moq),
+      csvNum(e.wholesale), csvNum(e.vvpEuro), csvNum(e.retailEuro),
+      csvNum(e.targetMargin), csvNum(e.actualMargin),
+      csvCell(e.status), csvCell(e.savedAt), csvCell(e.updatedAt), csvCell(now),
+    ].join(','));
+  });
+  return rows;
+}
+
+function exportBiCSV() {
+  if (!entries.length) { showToast('Geen data om te exporteren'); return; }
+  const csv = '\uFEFF' + buildBiRows(entries).join('\n');
+  downloadCSVString(csv, 'brunotti_ss27_powerbi');
+  showToast(`⬇ Power BI dataset: ${entries.length} rijen`);
+}
+
+// ── Export-tab: live statistieken ──
+function renderExportTab() {
+  const el = document.getElementById('shopifyStats');
+  if (!el) return;
+  const pool = exportPool();
+  let variants = 0, noPrice = 0, noBarcode = 0, noSizes = 0;
+  pool.forEach(e => {
+    const si = e.collectie?.styleInfo || {};
+    const sizes = si.sizeRange ? String(si.sizeRange).split('|').filter(Boolean).length : 0;
+    variants += sizes || 1;
+    if (!sizes) noSizes++;
+    if (e.retailEuro == null || e.retailEuro === '' || !e.retailEuro) noPrice++;
+    if (!e.collectie?.hangtags?.mainBarcode) noBarcode++;
+  });
+  const stat = (label, val, warn) =>
+    `<div style="padding:6px 12px;background:var(--card,#fff);border:1px solid var(--border);border-radius:var(--radius)">
+      <b style="${warn && val > 0 ? 'color:var(--error,#c0392b)' : 'color:var(--teal)'}">${val}</b>
+      <span style="color:var(--ink-mid)"> ${label}</span></div>`;
+  el.innerHTML =
+    stat('producten (stijl+kleur)', pool.length) +
+    stat('varianten (maten)', variants) +
+    stat('zonder maatrange', noSizes, true) +
+    stat('zonder verkoopprijs', noPrice, true) +
+    stat('zonder barcode/EAN', noBarcode, true);
 }
 
 // ── Generic export for stamdata categories (leveranciers, kleuren, stoffen, HS codes, fits) ──
@@ -4095,6 +4293,147 @@ function renderRecCheckList() {
   `).join('');
 }
 
+// ── Roadmap & verbeterpunten (app-doorlichting 6 juli 2026) ────
+// Elk punt: id (stabiel, voor opslag), cat, prio (hoog/mid/laag,
+// aanpasbaar door gebruiker), title, desc. 🗣️ = meeting-beslispunt.
+const ROADMAP_CATS = {
+  meeting: { label: '🗣️ Beslispunten voor de meeting', order: 1 },
+  powerbi: { label: '📊 Power BI-koppeling',            order: 2 },
+  shopify: { label: '🛒 Shopify-koppeling',             order: 3 },
+  techniek:{ label: '⚡ Sneller & stabieler',            order: 4 },
+  samen:   { label: '👥 Samen doorontwikkelen',          order: 5 },
+};
+const ROADMAP_ITEMS = [
+  // ── Meeting-beslispunten ──
+  { id:'maten_ean',    cat:'meeting', prio:'hoog', title:'Maten & EAN per variant — wel of niet in het datamodel?',
+    desc:'De app werkt nu op stijl+kleur-niveau, zonder maten. Voor Shopify (elke maat = variant met eigen EAN), inkoop (aantallen per maat) en Power BI (verkoop koppelt op EAN) is dit dé structurele vraag. Beslissen vóór fase 2 en 3 — achteraf inbouwen is veel duurder.' },
+  { id:'status_wf',    cat:'meeting', prio:'hoog', title:'Status-workflow afspreken',
+    desc:'Concept → In review → Goedgekeurd → Geannuleerd bestaat, maar vrijwel alles staat op "concept". Afspraak nodig: wie zet wat wanneer op welke status? Zonder afspraak is het veld betekenisloos voor rapportage.' },
+  { id:'marge_targets',cat:'meeting', prio:'mid',  title:'Marge-targets valideren (42% / 37%)',
+    desc:'De drempels staan nu 35× hardcoded in de code. Zijn dit de officiële targets van inkoop, en verschillen ze per segment (Better/Best)? Daarna instelbaar maken via Instellingen/Stamdata.' },
+  { id:'veld_eigenaar',cat:'meeting', prio:'mid',  title:'Veld-eigenaarschap vastleggen',
+    desc:'FOB-prijzen komen van inkoop, sample/productie-data van productie. Wie is per veld de bron van waarheid? Nu overschrijft de laatste synchronisatie alles.' },
+  { id:'bi_voorkeur',  cat:'meeting', prio:'hoog', title:'Vraag aan BI-specialist: Google Sheet of direct endpoint?',
+    desc:'Power BI kan de Google Sheet lezen (web-connector), óf we bouwen een direct ?action=bi JSON/CSV-endpoint in het Apps Script. Voorkeur van de BI-specialist bepaalt de bouwrichting.' },
+  { id:'shopify_gaps', cat:'meeting', prio:'mid',  title:'Vraag aan online specialist: beschrijvingen & afbeeldingen',
+    desc:'De app dekt ~80% van een Shopify-productimport (barcode, prijs, kleur, HS-code, gewicht). Wat ontbreekt: maten/varianten, productbeschrijvingen en afbeeldingen — waar komen die vandaan?' },
+  // ── Power BI ──
+  { id:'bi_tab',       cat:'powerbi', prio:'hoog', title:'Vaste "BI_Export"-tab in de Google Sheet',
+    desc:'De Power BI CSV-download bestaat al (menu Export). Open punt: dezelfde platte dataset als vaste tab in de Google Sheet, zodat Power BI automatisch ververst na elke sync — vereist een kleine Apps Script-uitbreiding (code ligt klaar).' },
+  { id:'updated_at',   cat:'powerbi', prio:'hoog', title:'updatedAt consequent bijhouden',
+    desc:'Alleen bulk-edits zetten nu een updatedAt — gewone bewerkingen niet. Nodig voor incrementeel verversen en wijzigingen volgen in Power BI. Kleine fix, grote waarde.' },
+  { id:'bi_endpoint',  cat:'powerbi', prio:'laag', title:'Direct ?action=bi endpoint (optioneel)',
+    desc:'Alternatief voor de Sheet-route: Apps Script-endpoint dat Power BI rechtstreeks kan bevragen. Alleen bouwen als de BI-specialist dit verkiest.' },
+  // ── Shopify ──
+  { id:'shopify_csv',  cat:'shopify', prio:'hoog', title:'Shopify CSV-export valideren met online specialist',
+    desc:'De export bestaat al (menu Export): officieel Shopify import-formaat, maten uit de Collectielijst als varianten, merk "Brunotti", producten als draft. Donderdag: proefimport in een test-shop doen en checken welke velden de online specialist nog mist (beschrijvingen, afbeeldingen).' },
+  { id:'shopify_mcp',  cat:'shopify', prio:'laag', title:'Directe Shopify-koppeling (later)',
+    desc:'Via de Shopify- en Lifetimely-koppeling kunnen producten later rechtstreeks vergeleken/aangemaakt worden zonder CSV-tussenstap, en sluit margedata aan op fase 3 (inkooplijst per leverancier).' },
+  // ── Techniek ──
+  { id:'seed_data',    cat:'techniek', prio:'hoog', title:'Embedded seed-data verwijderen (1,9 MB → ~300 KB)',
+    desc:'~1,6 MB van de app is embedded Excel-data die na de Drive-migratie verouderde ballast is — én een risico (nieuwe browser laadt eerst oude data). Vooraf eenmalig verifiëren dat de Drive-data compleet is.' },
+  { id:'html_escape',  cat:'techniek', prio:'mid',  title:'HTML-escaping in tabellen',
+    desc:'Een productnaam met < of een aanhalingsteken kan nu een tabel visueel breken. Centrale escape-functie toevoegen — puur stabiliteit.' },
+  { id:'action_meta',  cat:'techniek', prio:'mid',  title:'Lichte ?action=meta voor auto-sync',
+    desc:'Vóór elke automatische push wordt nu de complete dataset gedownload, alleen om het tijdstip te checken. Een meta-endpoint (alleen savedAt/savedBy) maakt auto-sync vele malen lichter — relevant zodra er meerdere seizoenen in staan.' },
+  { id:'opruimen',     cat:'techniek', prio:'laag', title:'Dead code & legacy-namen opruimen',
+    desc:'Dubbele filtercondities, ongebruikte functies en namen als "msalLogin"/"SharePoint" (restanten van de oude opzet) verwarren iedere nieuwe ontwikkelaar.' },
+  { id:'debounce',     cat:'techniek', prio:'laag', title:'Debounce op zoekveld',
+    desc:'Bij 686 entries oké, maar bij meerdere seizoenen wordt her-renderen per toetsaanslag merkbaar. Kleine debounce (150 ms) volstaat.' },
+  // ── Samen ontwikkelen ──
+  { id:'gs_in_repo',   cat:'samen', prio:'hoog', title:'Apps Script-code in de repo zetten',
+    desc:'De backend-code staat nu alléén in Google. In de repo (bijv. /backend/Code.gs) = versiebeheer + iedereen kan meekijken.' },
+  { id:'readme',       cat:'samen', prio:'hoog', title:'README met architectuur & valkuilen',
+    desc:'GitHub Pages + Apps Script + Drive uitgelegd, plus de bekende valkuilen (CORS bij lokale bestanden, text/plain-header). Daarmee snappen de BI- en online specialist direct hoe alles hangt.' },
+  { id:'git_tags',     cat:'samen', prio:'mid',  title:'Releases taggen in git',
+    desc:'Elke release een git-tag (v2.1, v2.2, ...) voor makkelijke rollback naar een werkende versie.' },
+  { id:'branch_prot',  cat:'samen', prio:'laag', title:'Branch-protectie zodra tweede ontwikkelaar meedoet',
+    desc:'Wijzigingen via pull requests op een beschermde main-branch — voorkomt dat twee mensen elkaars werk overschrijven.' },
+];
+const ROADMAP_STATE_KEY = 'brunotti_ss27_roadmap';
+var _roadmapFilter = 'alles';
+
+function getRoadmapState() {
+  try { return JSON.parse(localStorage.getItem(ROADMAP_STATE_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveRoadmapState(state) {
+  try { localStorage.setItem(ROADMAP_STATE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+function toggleRoadmapDone(id) {
+  const state = getRoadmapState();
+  state[id] = state[id] || {};
+  state[id].done = !state[id].done;
+  saveRoadmapState(state);
+  renderRoadmap();
+}
+function setRoadmapPrio(id, prio) {
+  const state = getRoadmapState();
+  state[id] = state[id] || {};
+  state[id].prio = prio;
+  saveRoadmapState(state);
+  renderRoadmap();
+}
+function setRoadmapFilter(f) {
+  _roadmapFilter = f;
+  renderRoadmap();
+}
+function renderRoadmap() {
+  const el = document.getElementById('roadmapList');
+  if (!el) return;
+  const state = getRoadmapState();
+  const prioOrder = { hoog: 0, mid: 1, laag: 2 };
+  const prioLabel = { hoog: '🔴 Hoog', mid: '🟡 Middel', laag: '⚪ Laag' };
+
+  // Filterknoppen highlighten
+  ['alles','open','klaar','hoog'].forEach(f => {
+    const btn = document.getElementById('roadmapFilter-' + f);
+    if (btn) {
+      btn.classList.toggle('btn-primary', f === _roadmapFilter);
+      btn.classList.toggle('btn-ghost',   f !== _roadmapFilter);
+    }
+  });
+
+  // Voortgang totaal
+  const doneCount = ROADMAP_ITEMS.filter(it => state[it.id]?.done).length;
+  const prog = document.getElementById('roadmapProgress');
+  if (prog) prog.textContent = doneCount + ' van ' + ROADMAP_ITEMS.length + ' afgevinkt';
+
+  const cats = Object.entries(ROADMAP_CATS).sort((a,b) => a[1].order - b[1].order);
+  el.innerHTML = cats.map(([catKey, cat]) => {
+    let items = ROADMAP_ITEMS.filter(it => it.cat === catKey).map(it => {
+      const st = state[it.id] || {};
+      return { ...it, done: !!st.done, prio: st.prio || it.prio };
+    });
+    // Filter toepassen
+    if (_roadmapFilter === 'open')  items = items.filter(it => !it.done);
+    if (_roadmapFilter === 'klaar') items = items.filter(it => it.done);
+    if (_roadmapFilter === 'hoog')  items = items.filter(it => it.prio === 'hoog' && !it.done);
+    if (!items.length) return '';
+    // Sorteer: open eerst, dan op prioriteit
+    items.sort((a,b) => (a.done - b.done) || (prioOrder[a.prio] - prioOrder[b.prio]));
+    const catDone  = ROADMAP_ITEMS.filter(it => it.cat === catKey && state[it.id]?.done).length;
+    const catTotal = ROADMAP_ITEMS.filter(it => it.cat === catKey).length;
+    return '<div class="card" style="margin-bottom:14px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)">'
+      + '<div style="font-size:13px;font-weight:700">' + cat.label + '</div>'
+      + '<div style="font-size:10px;color:var(--ink-low);font-weight:600">' + catDone + '/' + catTotal + '</div>'
+      + '</div>'
+      + items.map(it =>
+        '<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 4px;border-bottom:1px solid var(--border)">'
+        + '<input type="checkbox" style="width:auto;margin-top:3px;cursor:pointer" ' + (it.done ? 'checked' : '') + ' onchange="toggleRoadmapDone(\'' + it.id + '\')">'
+        + '<div style="flex:1;' + (it.done ? 'opacity:.45;text-decoration:line-through' : '') + '">'
+        + '<div style="font-size:13px;font-weight:600;margin-bottom:2px">' + it.title + '</div>'
+        + '<div style="font-size:11.5px;color:var(--ink-mid);line-height:1.5">' + it.desc + '</div>'
+        + '</div>'
+        + '<select onchange="setRoadmapPrio(\'' + it.id + '\', this.value)" style="width:auto;font-size:10px;padding:3px 6px;flex-shrink:0;cursor:pointer' + (it.done ? ';opacity:.45' : '') + '">'
+        + ['hoog','mid','laag'].map(p => '<option value="' + p + '"' + (it.prio === p ? ' selected' : '') + '>' + prioLabel[p] + '</option>').join('')
+        + '</select>'
+        + '</div>'
+      ).join('')
+      + '</div>';
+  }).join('') || '<div class="card" style="text-align:center;color:var(--ink-low);padding:24px;font-size:12px">Geen punten in dit filter.</div>';
+}
+
 // ── Data-inzichten: to-do lijst voor tijdens de meeting ────────
 const MEETING_TODOS_KEY = 'brunotti_ss27_meeting_todos';
 
@@ -5003,10 +5342,21 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
-    version: '2.1',
+    version: '2.2',
     date: '2026-07-06',
     author: 'Martijn Cornelissen',
     active: true,
+    features: [
+      { name: 'Nieuwe Info-tab "Roadmap"', desc: 'De volledige app-doorlichting van 6 juli als 20 afvinkbare verbeterpunten in vijf blokken: meeting-beslispunten, Power BI, Shopify, techniek en samen doorontwikkelen. Per punt aanpasbare prioriteit (hoog/middel/laag), filters (o.a. "alleen hoog" voor in de meeting) en voortgang per blok — alles wordt bewaard', tab: 'info', icon: '🗺️' },
+      { name: 'Auto-sync veel lichter via meta-endpoint', desc: 'De conflict-check vóór elke automatische push gebruikt voortaan het nieuwe lichte ?action=meta endpoint (alleen tijdstip/naam) in plaats van de complete dataset te downloaden, met automatische terugval zolang het Apps Script nog niet is bijgewerkt', tab: null, icon: '⚡' },
+      { name: 'BI_Export-tab in de Google Sheet', desc: 'Het Apps Script schrijft bij elke sync een platte, Power BI-klare dataset naar een vaste BI_Export-tab: één rij per stijl+kleur, vaste sleutelkolom, stabiele Engelse kolomnamen en échte getallen — exact hetzelfde schema als de "Power BI CSV"-download in het Export-menu', tab: 'export', icon: '📊' },
+    ]
+  },
+  {
+    version: '2.1',
+    date: '2026-07-06',
+    author: 'Martijn Cornelissen',
+    active: false,
     features: [
       { name: 'Google Drive als primaire opslag (Fase 1)', desc: 'Elke wijziging wordt 5 seconden na je laatste aanpassing automatisch naar Google Drive gesynchroniseerd. De browseropslag is voortaan alleen nog een lokale cache/offline-vangnet — de 5MB-limiet is daarmee geen risico meer voor dataverlies', tab: 'versies', icon: '☁' },
       { name: 'Auto-sync aan/uit-schakelaar', desc: 'Nieuwe instelling onder Sync & Instellingen (standaard aan). Auto-syncs zijn in Drive herkenbaar aan de toevoeging "(auto)" achter je naam', tab: 'versies', icon: '⚙' },
@@ -5822,10 +6172,18 @@ async function runAutoSync() {
     setSyncStatus('syncing', 'Automatisch synchroniseren...');
 
     // Conflict-check: nooit stilletjes een nieuwere teamversie overschrijven.
-    // Bij conflict: géén popup (dit draait op de achtergrond) — status tonen
-    // en de gebruiker beslist via de handmatige sync-knoppen.
-    var checkRes  = await fetch(APPS_SCRIPT_URL + '?action=load', { method: 'GET' });
-    var checkData = await checkRes.json();
+    // Eerst het lichte ?action=meta proberen (alleen savedAt/savedBy); als het
+    // Apps Script dat (nog) niet ondersteunt, terugvallen op de volledige load.
+    var checkData = null;
+    try {
+      var metaRes = await fetch(APPS_SCRIPT_URL + '?action=meta', { method: 'GET' });
+      var metaJson = await metaRes.json();
+      if (metaJson && metaJson.status === 'ok' && metaJson.savedAt) checkData = metaJson;
+    } catch (metaErr) { /* meta niet ondersteund of mislukt — fallback hieronder */ }
+    if (!checkData) {
+      var checkRes = await fetch(APPS_SCRIPT_URL + '?action=load', { method: 'GET' });
+      checkData = await checkRes.json();
+    }
     if (checkData.status === 'ok' && checkData.savedAt) {
       var cloudTime = new Date(checkData.savedAt).getTime();
       var localTime = new Date(localStorage.getItem('brunotti_ss27_lastSync') || 0).getTime();
