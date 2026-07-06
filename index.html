@@ -1234,6 +1234,10 @@
         <button class="btn btn-primary btn-sm" id="syncSaveBtn" onclick="syncToSharePoint()">🔄 Synchroniseren met team</button>
         <button class="btn btn-ghost btn-sm" id="syncLoadBtn" onclick="loadFromSharePoint(false)">⬇ Ophalen van team</button>
       </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;margin-top:12px;padding:10px 12px;background:var(--card,#fff);border:1px solid var(--border);border-radius:var(--radius)">
+        <input type="checkbox" id="autoSyncEnabled" onchange="toggleAutoSync()" style="width:auto">
+        <span><b>☁ Auto-sync met Google Drive</b> — wijzigingen worden 5 sec. na je laatste aanpassing automatisch opgeslagen in Drive. Browseropslag is dan alleen nog een lokale cache.</span>
+      </label>
       <div id="gasStatusDetail" style="margin-top:8px;font-size:10px;color:var(--ink-low)"></div>
       <a id="openSheetBtn" href="#" target="_blank" rel="noopener"
          style="display:none;margin-top:12px;align-items:center;gap:6px;padding:10px 14px;background:#0f9d58;color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;width:fit-content">
@@ -1682,6 +1686,8 @@ window.onload = () => {
   switchTab('stamdata');
   // Init sheet button if URL known
   initSheetButton();
+  // Init auto-sync toggle (Fase 1: Drive als primaire opslag)
+  initAutoSyncUI();
   // Init SharePoint sync
   setTimeout(initMsal, 500);
 };
@@ -2196,7 +2202,7 @@ function saveEntry() {
     entries.push(data);
     showToast(`✓ ${data.styleName} · ${data.colourName} opgeslagen`);
   }
-  localStorage.setItem('brunotti_ss27_entries', JSON.stringify(entries));
+  persistData();
   autoSaveIfEnabled(data.styleName + ' · ' + (data.colourName||''));
   updateOverview();
   filterTable();
@@ -2442,7 +2448,7 @@ function deleteEntry(i) {
   if (!confirm('Entry verwijderen?')) return;
   const delName = entries[i]?.styleName || '';
   entries.splice(i, 1);
-  localStorage.setItem('brunotti_ss27_entries', JSON.stringify(entries));
+  persistData();
   autoSaveIfEnabled('Verwijderd: ' + delName);
   updateOverview();
   filterTable();
@@ -2845,8 +2851,7 @@ function restoreVersion(id) {
   masterData = JSON.parse(JSON.stringify(snap.masterData));
 
   // Persist restored state
-  localStorage.setItem('brunotti_ss27_entries', JSON.stringify(entries));
-  localStorage.setItem('brunotti_ss27_master', JSON.stringify(masterData));
+  persistData();
 
   updateOverview();
   filteredEntries = [...entries];
@@ -3550,8 +3555,7 @@ function saveInlineVendor(ri) {
   });
 
   // Persist
-  localStorage.setItem('brunotti_ss27_master', JSON.stringify(masterData));
-  localStorage.setItem('brunotti_ss27_entries', JSON.stringify(entries));
+  persistData();
 
   // Feedback
   var fb = document.getElementById('ie_feedback_' + ri);
@@ -3944,7 +3948,7 @@ function saveModalEdit() {
           }
         }
       });
-      localStorage.setItem('brunotti_ss27_entries', JSON.stringify(entries));
+      persistData();
       updateOverview();
       showToast(`✓ Marges herberekend voor alle artikelen van ${name}`);
     }
@@ -3978,7 +3982,7 @@ function saveModalEdit() {
       showToast('✓ Nieuw item toegevoegd');
     }
     // Persist master data
-    localStorage.setItem('brunotti_ss27_master', JSON.stringify(masterData));
+    persistData();
     closeModal();
     renderStamdata();
     // Also update VENDORS const for invoer dropdown sync
@@ -4472,7 +4476,7 @@ function saveCollectieDetail(idx) {
     cancelDate: g('c_cancelDate'),
   };
 
-  localStorage.setItem('brunotti_ss27_entries', JSON.stringify(entries));
+  persistData();
   showToast('✓ Collectielijst-gegevens opgeslagen');
   renderCollectielijst();
 }
@@ -4497,7 +4501,7 @@ function deleteStam(type, i) {
   const label = item.name || item.code || item.quality || item.no || 'dit item';
   if (!confirm(`"${label}" verwijderen?`)) return;
   masterData[type].splice(i, 1);
-  localStorage.setItem('brunotti_ss27_master', JSON.stringify(masterData));
+  persistData();
   renderStamdata();
   showToast('Item verwijderd');
 }
@@ -4978,7 +4982,7 @@ async function applyBulkEdit() {
     count++;
   });
 
-  localStorage.setItem('brunotti_ss27_entries', JSON.stringify(entries));
+  persistData();
   showToast(`✓ ${count} artikelen bijgewerkt: ${changes.join(', ')}`);
 
   // Reset invoervelden
@@ -4999,10 +5003,24 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
+    version: '2.1',
+    date: '2026-07-06',
+    author: 'Martijn Cornelissen',
+    active: true,
+    features: [
+      { name: 'Google Drive als primaire opslag (Fase 1)', desc: 'Elke wijziging wordt 5 seconden na je laatste aanpassing automatisch naar Google Drive gesynchroniseerd. De browseropslag is voortaan alleen nog een lokale cache/offline-vangnet — de 5MB-limiet is daarmee geen risico meer voor dataverlies', tab: 'versies', icon: '☁' },
+      { name: 'Auto-sync aan/uit-schakelaar', desc: 'Nieuwe instelling onder Sync & Instellingen (standaard aan). Auto-syncs zijn in Drive herkenbaar aan de toevoeging "(auto)" achter je naam', tab: 'versies', icon: '⚙' },
+      { name: 'Conflict-veilige achtergrond-sync', desc: 'Vóór elke automatische push wordt gecontroleerd of er een nieuwere teamversie op Drive staat. Zo ja: geen stille overschrijving, maar een statusmelding — jij beslist via de handmatige knoppen', tab: 'versies', icon: '🛡️' },
+      { name: 'Opslaggebruik gehalveerd', desc: 'De sync-controle bewaarde een complete tweede kopie van alle data in de browseropslag; die is vervangen door een kleine fingerprint-hash. Bestaande dubbele kopie wordt bij de eerste synchronisatie automatisch opgeruimd', tab: 'versies', icon: '🧹' },
+      { name: 'Quota-veilig opslaan', desc: 'Als de browseropslag vol raakt faalt het opslaan niet meer stilletjes — je krijgt een duidelijke melding en je data blijft veilig in Google Drive staan', tab: 'versies', icon: '🔧' },
+      { name: 'Waarschuwing bij sluiten met openstaande wijzigingen', desc: 'Sluit je het tabblad terwijl er nog niet-gesynchroniseerde wijzigingen zijn (binnen de 5 seconden, of offline), dan vraagt de browser eerst om bevestiging', tab: null, icon: '🛡️' },
+    ]
+  },
+  {
     version: '2.0',
     date: '2026-07-05',
     author: 'Martijn Cornelissen',
-    active: true,
+    active: false,
     features: [
       { name: 'Collectielijst — volledig nieuwe module', desc: 'Productie- en sample-tracking naast de Calculatielijst: Swim, Sample-behoefte, Proto, SMS, Foto, Productie, Gewicht en Labels per artikel, met eigen Invoer/Kwaliteit/Overzicht — geïmporteerd vanuit SS27_COLLECTIONLIST.xlsx en gekoppeld aan bestaande artikelen op stijl+kleur', tab: 'collectielijst', icon: '📦' },
       { name: 'Menu volledig herstructureerd', desc: 'Duidelijk hoofdmenu: Stamdata, Calculatielijst (Invoer/Kwaliteit/Overzicht als submenu), Collectielijst (eigen Invoer/Kwaliteit/Overzicht), Info en Instellingen — in plaats van één platte rij tabs', tab: null, icon: '🗂️' },
@@ -5068,7 +5086,7 @@ const APP_CHANGELOG = [
     version: '1.5',
     date: '2026-07-04',
     author: 'Martijn Cornelissen',
-    active: true,
+    active: false,
     features: [
       { name: 'Google Drive sync',              desc: 'Data synchroniseren via Google Apps Script — alle teamleden werken met dezelfde data via Google Drive (martijnbrunotti@gmail.com)', tab: 'versies', icon: '☁' },
       { name: 'Sync instellingen in Versies-tab', desc: 'Google account en Apps Script URL vastgelegd en aanpasbaar in de Versies-tab', tab: 'versies', icon: '⚙' },
@@ -5091,7 +5109,7 @@ const APP_CHANGELOG = [
     version: '1.3',
     date: '2026-07-04',
     author: 'Martijn Cornelissen',
-    active: true,
+    active: false,
     features: [
       { name: 'Live validatie invoer',        desc: 'Velden kleuren rood/oranje/groen tijdens typen — alleen na aanraking, alle velden zichtbaar bij opslaan', tab: 'invoer',   icon: '✓' },
       { name: 'Style zoeken op alle entries', desc: 'Zoeken in Invoer zoekt nu in alle 686 SS27 entries in plaats van een kleine statische lijst', tab: 'invoer',   icon: '🔍' },
@@ -5108,7 +5126,7 @@ const APP_CHANGELOG = [
     version: '1.2',
     date: '2026-07-04',
     author: 'Martijn Cornelissen',
-    active: true,
+    active: false,
     features: [
       { name: 'Gebruiker per snapshot',        desc: 'Snapshots tonen wie de wijziging heeft doorgevoerd — handig als meerdere collega’s werken met de app', tab: 'versies',  icon: '👤' },
       { name: 'Doorklikken vanuit kwaliteit',  desc: 'KPI-kaarten en collectiegroep-rijen in de Kwaliteit-tab zijn klikbaar en openen het Overzicht met de juiste filter', tab: 'controle', icon: '🔍' },
@@ -5125,7 +5143,7 @@ const APP_CHANGELOG = [
     version: '1.1',
     date: '2026-07-04',
     author: 'Martijn Cornelissen',
-    active: true,
+    active: false,
     features: [
       { name: 'Seizoensvergelijking',      desc: 'Vergelijk styles tussen seizoenen: nieuw, terugkerend, vervallen en prijswijzigingen per style',  tab: null, icon: '📊' },
       { name: 'Bulk bewerken',             desc: 'Selecteer meerdere artikelen tegelijk en pas status, segment, kwaliteit, target marge of opmerking in één keer aan', tab: null, icon: '✏' },
@@ -5136,7 +5154,7 @@ const APP_CHANGELOG = [
     version: '1.0',
     date: '2026-07-04',
     author: 'Martijn Cornelissen',
-    active: true,
+    active: false,
     features: [
       { name: 'Invoer',                    desc: 'Artikelen invoeren met cascading dropdowns, vendor auto-fill en live margeberekening',              tab: 'invoer',   icon: '📝' },
       { name: 'Overzicht',                 desc: 'Sorteerbaar en filterbaar tabeloverzicht van alle SS27 entries met CSV-export',                    tab: 'overzicht',icon: '📋' },
@@ -5537,17 +5555,34 @@ function setSyncStatus(state, label) {
 // lokale wijzigingen? Vergelijkt huidige data met de laatst bekende
 // gesynchroniseerde snapshot. Voorkomt dat een auto-load stilletjes
 // iemands niet-opgeslagen werk overschrijft. ──
+// ── Fingerprint i.p.v. volledige kopie: de oude aanpak bewaarde een
+// complete tweede kopie van alle data in localStorage (verdubbeld
+// opslaggebruik). Een 32-bit hash + lengte is genoeg om wijzigingen
+// te detecteren en kost vrijwel geen ruimte. ──
+function dataFingerprint() {
+  var s = JSON.stringify({ entries, masterData });
+  var h = 5381;
+  for (var i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) | 0; }
+  return h + ':' + s.length;
+}
 function markSynced() {
-  localStorage.setItem('brunotti_ss27_syncedSnapshot', JSON.stringify({ entries, masterData }));
+  try {
+    localStorage.setItem('brunotti_ss27_syncedFp', dataFingerprint());
+    // Eenmalige migratie: oude volledige snapshot opruimen (bespaart ~1-2MB)
+    localStorage.removeItem('brunotti_ss27_syncedSnapshot');
+  } catch (e) {
+    console.warn('Kon sync-fingerprint niet opslaan:', e);
+  }
 }
 function hasUnsyncedChanges() {
+  var fp = localStorage.getItem('brunotti_ss27_syncedFp');
+  if (fp) return fp !== dataFingerprint();
+  // Migratiepad: oude volledige snapshot nog aanwezig van vorige versie?
   var snap = localStorage.getItem('brunotti_ss27_syncedSnapshot');
-  if (!snap) return entries.length > 0; // nog nooit gesynchroniseerd, maar wel al data
-  try {
-    return snap !== JSON.stringify({ entries, masterData });
-  } catch (e) {
-    return false;
+  if (snap) {
+    try { return snap !== JSON.stringify({ entries, masterData }); } catch (e) { return false; }
   }
+  return entries.length > 0; // nog nooit gesynchroniseerd, maar wel al data
 }
 
 async function syncToSharePoint(force) {
@@ -5695,9 +5730,14 @@ async function loadFromSharePoint(silent) {
 
         entries    = data.entries;
         if (data.masterData) masterData = data.masterData;
-        localStorage.setItem('brunotti_ss27_entries', JSON.stringify(entries));
-        localStorage.setItem('brunotti_ss27_master',  JSON.stringify(masterData));
-        localStorage.setItem('brunotti_ss27_lastSync', data.savedAt);
+        try {
+          localStorage.setItem('brunotti_ss27_entries', JSON.stringify(entries));
+          localStorage.setItem('brunotti_ss27_master',  JSON.stringify(masterData));
+          localStorage.setItem('brunotti_ss27_lastSync', data.savedAt);
+        } catch (cacheErr) {
+          // Cache past niet — geen probleem: Drive is de bron, app werkt gewoon door
+          console.warn('Lokale cache vol na cloud-load:', cacheErr);
+        }
         markSynced();
         filteredEntries = [...entries];
         updateOverview();
@@ -5740,6 +5780,126 @@ function syncAfterSave() {
     setTimeout(syncToSharePoint, 1500);
   }
 }
+
+// ══ FASE 1 — GOOGLE DRIVE ALS PRIMAIRE OPSLAG ═══════════════
+// Elke wijziging wordt automatisch (debounced) naar Google Drive
+// gesynchroniseerd. localStorage is vanaf nu een lokale cache /
+// offline-vangnet, geen primaire database meer. De 5MB-limiet is
+// daarmee geen risico meer voor dataverlies: bij een volle browser-
+// opslag blijft de data gewoon veilig in Drive staan.
+
+var AUTOSYNC_KEY = 'brunotti_ss27_autosync';
+function autoSyncEnabled() { return localStorage.getItem(AUTOSYNC_KEY) !== 'off'; }
+var autoSyncTimer = null;
+var autoSyncBusy  = false;
+
+// ── Centrale opslagfunctie: cache lokaal (quota-veilig) + plan cloud-sync ──
+function persistData() {
+  try {
+    localStorage.setItem('brunotti_ss27_entries', JSON.stringify(entries));
+    localStorage.setItem('brunotti_ss27_master',  JSON.stringify(masterData));
+  } catch (e) {
+    // Browseropslag vol — geen ramp meer: Drive is de primaire opslag.
+    console.warn('localStorage quota bereikt, data gaat alleen naar Drive:', e);
+    showToast('⚠ Browseropslag vol — je data wordt veilig in Google Drive bewaard');
+  }
+  if (typeof updateStorageUsageBar === 'function') { try { updateStorageUsageBar(); } catch(e){} }
+  scheduleAutoSync();
+}
+
+function scheduleAutoSync() {
+  if (!autoSyncEnabled() || !APPS_SCRIPT_URL) return;
+  clearTimeout(autoSyncTimer);
+  autoSyncTimer = setTimeout(runAutoSync, 5000); // 5s na de laatste wijziging
+  setSyncStatus('syncing', 'Wijzigingen — auto-sync gepland...');
+}
+
+async function runAutoSync() {
+  if (autoSyncBusy) { scheduleAutoSync(); return; }
+  if (!hasUnsyncedChanges()) { setSyncStatus('online', 'Google Drive'); return; }
+  autoSyncBusy = true;
+  try {
+    setSyncStatus('syncing', 'Automatisch synchroniseren...');
+
+    // Conflict-check: nooit stilletjes een nieuwere teamversie overschrijven.
+    // Bij conflict: géén popup (dit draait op de achtergrond) — status tonen
+    // en de gebruiker beslist via de handmatige sync-knoppen.
+    var checkRes  = await fetch(APPS_SCRIPT_URL + '?action=load', { method: 'GET' });
+    var checkData = await checkRes.json();
+    if (checkData.status === 'ok' && checkData.savedAt) {
+      var cloudTime = new Date(checkData.savedAt).getTime();
+      var localTime = new Date(localStorage.getItem('brunotti_ss27_lastSync') || 0).getTime();
+      if (!isNaN(cloudTime) && cloudTime > localTime) {
+        setSyncStatus('error', '⚠ Nieuwere teamversie op Drive — synchroniseer handmatig');
+        showToast('⚠ Auto-sync gepauzeerd: er staat een nieuwere teamversie op Drive. Gebruik "Synchroniseren met team" of "Ophalen van team" om dit op te lossen.');
+        return;
+      }
+    }
+
+    var payload = {
+      action: 'save',
+      payload: {
+        savedAt:    new Date().toISOString(),
+        savedBy:    (localStorage.getItem('brunotti_ss27_user') || 'onbekend') + ' (auto)',
+        version:    APP_VERSION,
+        entries:    entries,
+        masterData: masterData,
+      }
+    };
+    var res  = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'text/plain' },
+    });
+    var data = await res.json();
+    if (data.status === 'ok') {
+      try { localStorage.setItem('brunotti_ss27_lastSync', new Date().toISOString()); } catch(e){}
+      markSynced();
+      setSyncStatus('online', '✓ Auto-opgeslagen in Drive — ' + new Date().toLocaleTimeString('nl-NL'));
+      if (data.sheetUrl) {
+        try { localStorage.setItem('brunotti_ss27_sheetUrl', data.sheetUrl); } catch(e){}
+        updateSheetButton(data.sheetUrl);
+      }
+    } else {
+      throw new Error(data.error || 'Onbekende fout');
+    }
+  } catch (err) {
+    // Offline of tijdelijke fout: stil falen — data staat lokaal gecachet,
+    // de volgende wijziging (of handmatige sync) probeert het opnieuw.
+    console.warn('Auto-sync mislukt:', err);
+    setSyncStatus('error', 'Auto-sync mislukt — lokaal bewaard, probeert later opnieuw');
+  } finally {
+    autoSyncBusy = false;
+  }
+}
+
+function toggleAutoSync() {
+  var cb = document.getElementById('autoSyncEnabled');
+  if (!cb) return;
+  localStorage.setItem(AUTOSYNC_KEY, cb.checked ? 'on' : 'off');
+  if (cb.checked) {
+    showToast('✓ Auto-sync met Google Drive ingeschakeld');
+    scheduleAutoSync();
+  } else {
+    clearTimeout(autoSyncTimer);
+    showToast('ℹ Auto-sync uitgeschakeld — vergeet niet handmatig te synchroniseren');
+    setSyncStatus('online', 'Google Drive (handmatige sync)');
+  }
+}
+
+function initAutoSyncUI() {
+  var cb = document.getElementById('autoSyncEnabled');
+  if (cb) cb.checked = autoSyncEnabled();
+}
+
+// Waarschuw bij het sluiten van de pagina als er nog niet-gesynchroniseerde
+// wijzigingen zijn (bijv. binnen de 5s debounce, of terwijl je offline bent).
+window.addEventListener('beforeunload', function (e) {
+  if (hasUnsyncedChanges()) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
 
 function msalLogin() { showGasConfig(); }
 
