@@ -1205,6 +1205,10 @@
           style="font-size:11px;font-family:monospace"
           oninput="localStorage.setItem('brunotti_gas_url',this.value);APPS_SCRIPT_URL=this.value">
       </div>
+      <div style="display:grid;grid-template-columns:140px 1fr;gap:8px;align-items:start;margin-bottom:12px">
+        <button class="btn btn-ghost btn-sm" onclick="testGasConnection()" style="white-space:nowrap">🔧 Test verbinding</button>
+        <div id="gasTestResult" style="font-size:11px;color:var(--ink-mid);padding-top:5px"></div>
+      </div>
 
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <button class="btn btn-primary btn-sm" onclick="saveGasSettings()">Opslaan instellingen</button>
@@ -5875,10 +5879,20 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
+    version: '2.5.1',
+    date: '2026-07-08',
+    author: 'Martijn Cornelissen',
+    active: true,
+    features: [
+      { name: 'Sync-verbinding structureel gerepareerd', desc: 'De app wees standaard nog naar een verouderde Apps Script-deployment, waardoor elke nieuwe browser of elk nieuw apparaat "Laden mislukt / Failed to fetch" kreeg (en de Google Sheet-knop in Export onzichtbaar bleef — die verschijnt pas na de eerste geslaagde sync). De actieve deployment-URL van 8 juli is nu de standaard, en bekende oude URLs die nog in de browseropslag hangen worden bij het opstarten automatisch opgewaardeerd', tab: 'instellingen', icon: '🔌' },
+      { name: '🔧 Test verbinding-knop', desc: 'Nieuw in Instellingen → Sync & Instellingen: één klik test de verbinding met het Apps Script en toont wélke URL de app gebruikt (standaard of aangepast), of er teamdata staat en van wie, en bij een fout een concrete diagnose — inclusief een waarschuwing als er per ongeluk een editor-link in plaats van een web-app-URL is geplakt', tab: 'instellingen', icon: '🔧' },
+    ]
+  },
+  {
     version: '2.5',
     date: '2026-07-06',
     author: 'Martijn Cornelissen',
-    active: true,
+    active: false,
     features: [
       { name: 'Data-inzichten uitgebreid met twee live overzichten', desc: 'Onder Info → Data-inzichten: "Stamdata-gaten" toont per categorie live welke velden nog ontbreken, met een %-compleet-badge en klikbare chips die direct naar de gefilterde stamdata-tabel springen. "Leveranciers in cijfers" toont per leverancier het aantal artikelen, de datavolledigheid, de gemiddelde marge en hoeveel artikelen onder de 42%-target zitten — klik op een regel om het Overzicht op die leverancier te filteren. Een voorproefje van de inkooplijst-analyse uit fase 3', tab: 'info', icon: '🔍' },
       { name: 'Stoffen samengevoegd naar één bewerkbare versie', desc: 'De alleen-lezen "Fabric Info"-tab is verdwenen: alle rijke stofinformatie (stofleverancier, echte stofcode, breedte, prijs, MOQ sampling én bulk, leadtimes, functionaliteit, wasinstructies, productgroep) zit nu ín de bewerkbare Stoffen-stamdata — volledig bewerkbaar en syncend naar Drive en de Google Sheet. Slimmigheid bij de migratie: waar het oude "Fabric Code"-veld eigenlijk de stofleveranciersnaam bevatte, is die naar het nieuwe Stofleverancier-veld verhuisd en staat de échte stofcode nu op zijn plek. Eigen bewerkingen worden nooit overschreven', tab: 'stamdata', icon: '🧵' },
@@ -6506,7 +6520,20 @@ function copyColourWay() {
 // Geen login nodig voor eindgebruikers — de Apps Script draait onder
 // het Google-account van degene die het script heeft gedeployed.
 
-var APPS_SCRIPT_URL = localStorage.getItem('brunotti_gas_url') || 'https://script.google.com/macros/s/AKfycbzuiG1FAsq60zBdTpJlTXMw-mQZgJVwvAUyOQM_yD-pVNKfVLHnFLDHQeFlyM9nq1GOcg/exec';
+// Actieve Apps Script web-app deployment (8 juli 2026). Oudere deployment-IDs
+// hieronder worden automatisch opgewaardeerd — ook als ze nog in localStorage
+// van een eerder bezoek staan (de app schrijft de URL daar bij het eerste bezoek in).
+var GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbzH6r7pdQdGbVnmqiHuce3ZEMZ2ZzAYCBYmWFc3vYPqpLn6GyL52ar9weVYaMcjIZON0A/exec';
+var GAS_URL_LEGACY = [
+  'AKfycbzuiG1FAsq60zBdTpJlTXMw-mQZgJVwvAUyOQM_yD-pVNKfVLHnFLDHQeFlyM9nq1GOcg', // pre-Sheet deployment (tot 5 juli)
+  'AKfycbz4WXvQzwjKKid1-u8GNlIY5Z9dqb47FJuo-gEc28MBKP8soShRQHyiLPx-EyAqMB3qJw', // 5-8 juli
+];
+var _savedGasUrl = localStorage.getItem('brunotti_gas_url') || '';
+if (!_savedGasUrl || GAS_URL_LEGACY.some(function (id) { return _savedGasUrl.indexOf(id) !== -1; })) {
+  localStorage.setItem('brunotti_gas_url', GAS_URL_DEFAULT);
+  _savedGasUrl = GAS_URL_DEFAULT;
+}
+var APPS_SCRIPT_URL = _savedGasUrl;
 var GAS_ACCOUNT_DEFAULT = 'martijnbrunotti@gmail.com';
 if (!localStorage.getItem('brunotti_gas_account')) {
   localStorage.setItem('brunotti_gas_account', GAS_ACCOUNT_DEFAULT);
@@ -6818,6 +6845,42 @@ async function loadFromSharePoint(silent) {
   } catch(err) {
     setSyncStatus('error', 'Fout', 'Laden mislukt — probeer het later opnieuw');
     if (!silent) showToast('\u2717 Laden mislukt: ' + err.message);
+  }
+}
+
+// ── Sync-diagnose: test de geconfigureerde Apps Script-verbinding ──
+async function testGasConnection() {
+  var el = document.getElementById('gasTestResult');
+  if (!el) return;
+  var url = APPS_SCRIPT_URL || '';
+  var bron = (url === GAS_URL_DEFAULT) ? 'standaard uit de app' : 'aangepast op dit apparaat';
+  var urlKort = url.replace('https://script.google.com/macros/s/', '…/').replace('/exec', '/exec');
+  if (!url) { el.innerHTML = '<span style="color:var(--red)">Geen URL geconfigureerd.</span>'; return; }
+  if (url.indexOf('/macros/s/') === -1 || url.indexOf('/exec') === -1) {
+    el.innerHTML = '<span style="color:var(--red)">⚠ Dit is geen web-app-URL.</span> De juiste URL begint met <span class="mono">script.google.com/macros/s/</span> en eindigt op <span class="mono">/exec</span> — te vinden via Deploy → Manage deployments (niet de editor-link uit de adresbalk).';
+    return;
+  }
+  el.innerHTML = '⏳ Testen… <span style="color:var(--ink-low)">(' + bron + ')</span>';
+  try {
+    var t0 = Date.now();
+    var res = await fetch(url + '?action=meta', { method: 'GET' });
+    var ms = Date.now() - t0;
+    var txt = await res.text();
+    var data = null;
+    try { data = JSON.parse(txt); } catch (e) {}
+    if (data && (data.status === 'ok' || data.savedAt || data.status === 'empty')) {
+      var detail = data.savedAt
+        ? 'laatste teamdata van ' + (data.savedBy || '?') + ' · ' + new Date(data.savedAt).toLocaleString('nl-NL')
+        : 'verbonden — nog geen teamdata aanwezig';
+      el.innerHTML = '<span style="color:var(--teal);font-weight:700">✓ Verbinding OK</span> (' + ms + 'ms) — ' + detail
+        + '<div style="color:var(--ink-low);margin-top:2px">URL in gebruik (' + bron + '): <span class="mono">' + urlKort + '</span></div>';
+    } else {
+      el.innerHTML = '<span style="color:var(--amber);font-weight:700">⚠ Onverwacht antwoord</span> — het endpoint reageert, maar niet zoals verwacht. Draait de nieuwste Code.gs? (Deploy → Manage deployments → potloodje → New version)'
+        + '<div style="color:var(--ink-low);margin-top:2px">Antwoord: <span class="mono">' + String(txt).slice(0, 120) + '</span></div>';
+    }
+  } catch (err) {
+    el.innerHTML = '<span style="color:var(--red);font-weight:700">✗ Verbinding mislukt</span> — ' + err.message
+      + '<div style="color:var(--ink-low);margin-top:2px">URL in gebruik (' + bron + '): <span class="mono">' + urlKort + '</span>. Controleer via Deploy → Manage deployments of deze deployment nog actief is, en of de web-app op "Anyone" staat.</div>';
   }
 }
 
