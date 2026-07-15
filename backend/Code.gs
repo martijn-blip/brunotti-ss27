@@ -1,15 +1,38 @@
 /**
  * BRUNOTTI SS27 — Google Apps Script backend
  * ============================================
- * VERSIE 6 juli 2026 — volledige vervanging van het vorige script.
- * Alles van de vorige versie zit erin, plus twee nieuwe onderdelen:
+ * VERSIE 15 juli 2026 — bijgewerkt op de recente app-uitbreidingen
+ * (PRICAT, Lineplan FW27, seizoensveld). Alles van de vorige versie
+ * (6 juli) zit erin, plus:
  *
- *  NIEUW 1. "BI_Export"-tab in de Google Sheet: platte, Power BI-klare
+ *  NIEUW 1. "Season"-kolom in de artikelen-tab. De app slaat sinds kort
+ *     een expliciet seizoen per artikel op (SS27/FW27/SS26/FW26) — dat
+ *     stond al in de BI_Export-tab maar ontbrak in de hoofdtab.
+ *
+ *  NIEUW 2. Hoofdtab hernoemd van "SS27 Data" naar "Artikelen" — de app
+ *     is niet langer alleen SS27, dus die naam was verwarrend.
+ *
+ *  NIEUW 3. Tabbladen staan nu in een vaste, logische volgorde die de
+ *     menu-structuur van de app volgt: Artikelen → Leveranciers →
+ *     Kleuren → Stoffen → HS Codes → Pasvorm → BI_Export → Sync Info → Log.
+ *     (Voorheen bepaalde de toevalligeaanmaakvolgorde de tabvolgorde.)
+ *
+ *  Let op: PRICAT, FW27-Collectielijst, Lineplan FW27 en de Segmenten/
+ *  Groepen-taxonomie worden bewust NIET gesynchroniseerd naar deze Sheet.
+ *  Dat zijn read-only referentiedatasets die rechtstreeks vanuit Excel-
+ *  bestanden in de app zelf (index.html) zijn ingeladen, niet iets wat
+ *  gebruikers in de app bewerken — dus niets om naar Drive/Sheets te
+ *  syncen. Alleen de daadwerkelijk bewerkbare data (Calculatielijst/
+ *  Collectielijst-artikelen + Stamdata) gaat hierheen.
+ *
+ * Alles hieronder is ongewijzigd t.o.v. 6 juli:
+ *
+ *  - "BI_Export"-tab in de Google Sheet: platte, Power BI-klare
  *     dataset (zelfde 29 kolommen als de "Power BI CSV"-download in de
  *     app), automatisch herschreven bij elke sync. Power BI leest deze
  *     tab via Get data → Web / Google Sheets en ververst dan vanzelf.
  *
- *  NIEUW 2. "?action=meta" endpoint: superlicht antwoord (alleen
+ *  - "?action=meta" endpoint: superlicht antwoord (alleen
  *     savedAt/savedBy/version) voor de conflict-check van de auto-sync,
  *     zodat niet telkens de complete dataset gedownload hoeft te worden.
  *     De metadata wordt bij elke save gecachet in Script Properties,
@@ -25,11 +48,14 @@
  *     restore into the app / used by "load").
  *  2. Writes a timestamped backup copy into a "Backups" subfolder
  *     (keeps the most recent 30, older ones are auto-deleted).
- *  3. Rewrites one Google Sheet with a tab per data category:
- *       - "SS27 Data"    — alle artikelen, met marge-kleurcodering
+ *  3. Rewrites one Google Sheet with a tab per data category, in deze
+ *     vaste volgorde:
+ *       - "Artikelen"    — alle Calculatielijst/Collectielijst-artikelen,
+ *         inclusief Season, met marge-kleurcodering
  *       - "Leveranciers", "Kleuren", "Stoffen", "HS Codes", "Pasvorm"
- *         — de stamdata, elk in hun eigen tabblad
- *       - "BI_Export"    — platte Power BI-dataset (NIEUW)
+ *         — de stamdata, elk in hun eigen tabblad, zelfde volgorde als
+ *         het Stamdata-menu in de app
+ *       - "BI_Export"    — platte Power BI-dataset
  *       - "Sync Info"    — details van de laatste sync
  *       - "Log"          — append-only geschiedenis, nieuwste bovenaan:
  *         wie heeft wanneer wat gesynchroniseerd (aantallen per categorie)
@@ -256,6 +282,7 @@ function getOrCreateSheet_() {
 var COLUMNS = [
   { key: 'styleNumber', label: 'Style Number' },
   { key: 'styleName', label: 'Style Name' },
+  { key: 'season', label: 'Season' },
   { key: 'vendor', label: 'Vendor' },
   { key: 'collectieGroep', label: 'Collectiegroep' },
   { key: 'group', label: 'Group' },
@@ -344,7 +371,7 @@ function rebuildSheet_(payload) {
   var ss = getOrCreateSheet_();
   var sheet = ss.getSheets()[0];
   sheet.clear();
-  sheet.setName('SS27 Data');
+  sheet.setName('Artikelen');
 
   // Header
   var headers = COLUMNS.map(function (c) { return c.label; });
@@ -442,6 +469,16 @@ function rebuildSheet_(payload) {
   // Log-tab: append-only geschiedenis van elke sync. Puur SpreadsheetApp,
   // vraagt geen extra rechten of Advanced Services. Nieuwste bovenaan.
   appendLogEntry_(ss, payload, entries.length);
+
+  // Volgorde van de tabbladen gelijktrekken met de menu-structuur van de
+  // app zelf: eerst de artikelen, dan Stamdata (Leveranciers → Pasvorm,
+  // zelfde volgorde als in de app), en de technische/utility-tabs
+  // (BI_Export, Sync Info, Log) helemaal achteraan.
+  var desiredOrder = ['Artikelen', 'Leveranciers', 'Kleuren', 'Stoffen', 'HS Codes', 'Pasvorm', 'BI_Export', 'Sync Info', 'Log'];
+  desiredOrder.forEach(function (name, idx) {
+    var s = ss.getSheetByName(name);
+    if (s) { ss.setActiveSheet(s); ss.moveActiveSheet(idx + 1); }
+  });
 
   return 'https://docs.google.com/spreadsheets/d/' + ss.getId() + '/edit';
 }
