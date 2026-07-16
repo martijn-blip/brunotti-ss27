@@ -553,13 +553,13 @@
   </div>
 </div>
 
-<div id="backBtnRow" style="display:none;padding:6px 24px 0;background:var(--white)">
-  <button class="back-btn" id="backBtn" onclick="goBack()" title="Terug naar vorig scherm" style="margin:0">
+<div id="navContext" style="padding:6px 24px 10px;background:var(--white);display:flex;align-items:center;gap:10px">
+  <button class="back-btn" id="backBtn" onclick="goBack()" title="Terug naar vorig scherm" style="margin:0;display:none">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     Terug
   </button>
+  <div id="breadcrumb" style="font-size:11px;color:var(--ink-low)"></div>
 </div>
-<div id="breadcrumb" style="padding:6px 24px 0;background:var(--white);font-size:11px;color:var(--ink-low)"></div>
 
 <div class="tabs">
   <div class="tab active" onclick="switchTab('stamdata')">📂 Stamdata</div>
@@ -1742,7 +1742,7 @@
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px">
         <div>
           <div style="font-size:13px;font-weight:700;margin-bottom:2px">🗺️ Roadmap &amp; verbeterpunten</div>
-          <div style="font-size:11px;color:var(--ink-low)">Uit de app-doorlichting van 6 juli 2026. Vink af wat gedaan of besloten is, en pas de prioriteit aan — alles wordt bewaard. Punten met 🗣️ zijn beslispunten voor de meeting met inkoop, productie, BI en online.</div>
+          <div style="font-size:11px;color:var(--ink-low)">Gestart vanuit de app-doorlichting van 6 juli 2026, sindsdien steeds aangevuld met nieuwe bevindingen. Vink af wat gedaan of besloten is, en pas de prioriteit aan — alles wordt bewaard. Punten met 🗣️ zijn beslispunten voor de meeting met inkoop, productie, BI en online.</div>
         </div>
         <div id="roadmapProgress" style="font-size:11px;font-weight:700;color:var(--teal);white-space:nowrap"></div>
       </div>
@@ -2355,21 +2355,32 @@ function goBack() {
 
 function updateBreadcrumb() {
   const bc = document.getElementById('breadcrumb');
-  if (!bc) return;
+  const nav = document.getElementById('navContext');
+  if (!bc || !nav) return;
   const mainTab = document.querySelector('.tabs > .tab.active');
   const activeMain = document.querySelector('.main:not(.hidden)');
-  const subTab = activeMain ? activeMain.querySelector('.subtab-bar .btn-primary') : null;
+  const subTabBar = activeMain ? activeMain.querySelector('.subtab-bar') : null;
+  const subTab = subTabBar ? subTabBar.querySelector('.btn-primary') : null;
   let html = mainTab ? mainTab.textContent.trim() : '';
   if (subTab) html += ' <span style="margin:0 4px">›</span> ' + subTab.textContent.trim();
   bc.innerHTML = html;
+
+  // navContext (terugknop + breadcrumb) hoort ónder het submenu te staan,
+  // vlak boven de inhoud — niet ervoor. Verplaats 'm daarom telkens naar
+  // net na de subtab-bar van de actieve hoofdtab (of bovenaan de inhoud
+  // als die tab geen submenu heeft).
+  if (activeMain) {
+    if (subTabBar) {
+      subTabBar.insertAdjacentElement('afterend', nav);
+    } else {
+      activeMain.insertAdjacentElement('afterbegin', nav);
+    }
+  }
 }
 
 function updateBackBtn() {
   var btn = document.getElementById('backBtn');
-  var row = document.getElementById('backBtnRow');
-  var show = _tabHistory.length >= 2;
-  if (btn) btn.style.display = show ? 'flex' : 'none';
-  if (row) row.style.display = show ? 'block' : 'none';
+  if (btn) btn.style.display = _tabHistory.length >= 2 ? 'flex' : 'none';
 }
 
 let _lastCalcSubTab = 'invoer';
@@ -5452,11 +5463,13 @@ function setInstTab(tab) {
 
 // ── Data-inzichten: aanvinkbare aanbevelingen ──────────────────
 const RECOMMENDATIONS = [
-  { title: 'Eenmalige opschoning van bestaande leveranciersnamen', desc: 'Overzicht bouwen van alle plekken waar dezelfde leverancier onder verschillende schrijfwijzen voorkomt (in de huidige 686 entries), zodat je in één keer kunt kiezen welke naam de "officiële" wordt.' },
-  { title: 'Stop met los Excel-beheer', desc: 'Nu de Collectielijst-functionaliteit in de app zit, is er geen inhoudelijke reden meer om COLLECTIONLIST.xlsx apart bij te houden — de app kan alles exporteren wat je voorheen in Excel deed.' },
-  { title: 'Prestatie: bestandsgrootte', desc: 'Het bestand is gegroeid naar ~2 MB door de geïmporteerde Collectielijst-data. De data comprimeren (zoals bij de 686 entries al gebeurt) verkort de laadtijd merkbaar als dit verder groeit.' },
-  { title: 'Dubbele records checken', desc: 'Er kwamen incidenteel identieke stijl+kleur-combinaties dubbel voor in de brondata. Een periodieke "dubbele records"-check in de Kwaliteit-tab zou dit voortaan automatisch signaleren.' },
-  { title: 'Eén canonieke naam afdwingen', desc: 'Velden als leverancier, kleur en stof overal via een gekoppelde keuzelijst laten lopen in plaats van vrije tekst — sluit dit type inconsistentie structureel uit.' },
+  { title: '3 leveranciers uit FW27 nog niet herkend in Stamdata', desc: '"Joyfull", "OMS" en "Shishi" komen voor in de FW27-Collectielijst maar matchen niet met een bestaande naam in Stamdata → Leveranciers. Checken of dit echt nieuwe leveranciers zijn en zo ja toevoegen, zodat marge/leverancier-inzicht voor FW27 compleet wordt.' },
+  { title: '13 nieuwe productgroepen uit FW27 beoordelen', desc: 'Groepen als "Furry Hat", "Legging" en "Salopette" komen niet voor in de PRICAT-taxonomie (Stamdata → Segmenten & Groepen). Geen schrijffouten — mogelijk bewuste nieuwe categorieën. Beoordelen en bevestigen zodat de taxonomie compleet blijft.' },
+  { title: '17 FW26-styles handmatig reconciliëren', desc: 'Van de 128 PRICAT FW26-styles matchen 17 niet automatisch op stijlnaam met FW26_CALCULATIONSHEET.xlsx — voor die styles blijven leverancier/marge/Good-Better-Best "Onbekend" in Seizoensvergelijking. Alleen de moeite waard als jullie FW26 als referentiejaar willen blijven gebruiken.' },
+  { title: 'Marge-targets officieel bevestigen (42% / 37%)', desc: 'Deze drempels bepalen alle groen/oranje/rood-kleurcodering in de app, maar zijn nooit formeel afgestemd met inkoop. Zijn dit de juiste percentages, en gelden ze voor elk segment (Good/Better/Best) even streng?' },
+  { title: 'Dubbele records periodiek checken', desc: 'Er kwamen incidenteel identieke stijl+kleur-combinaties dubbel voor in de brondata. Een terugkerende check (bv. bij elke seizoensimport) voorkomt dat dit type fout onopgemerkt blijft.' },
+  { title: 'PLM-proces gaten bespreken', desc: 'Zie Info → PLM-proces voor de volledige analyse: Tech Pack/BOM, sourcing/duurzaamheidscertificering en AQL-kwaliteitscontrole zijn de grootste stappen die de Collectie Cockpit nu nog niet ondersteunt. Bepalen of en wanneer dat gebouwd moet worden.' },
+  { title: 'Eén canonieke naam afdwingen', desc: 'Leverancier, kleur en stof lopen bij Invoer al via een gekoppelde keuzelijst, maar bij losse imports (Excel-bronnen) glipt er nog weleens een schrijfvariant doorheen — zoals we vandaag zagen bij Good/Better/Best (Title Case vs kleine letters). Bij elke nieuwe bronimport hier bewust op checken.' },
 ];
 const REC_CHECKS_KEY = 'brunotti_ss27_rec_checks';
 
@@ -5488,10 +5501,12 @@ function renderRecCheckList() {
 // aanpasbaar door gebruiker), title, desc. 🗣️ = meeting-beslispunt.
 const ROADMAP_CATS = {
   meeting: { label: '🗣️ Beslispunten voor de meeting', order: 1 },
-  powerbi: { label: '📊 Power BI-koppeling',            order: 2 },
-  shopify: { label: '🛒 Shopify-koppeling',             order: 3 },
-  techniek:{ label: '⚡ Sneller & stabieler',            order: 4 },
-  samen:   { label: '👥 Samen doorontwikkelen',          order: 5 },
+  plm:     { label: '📚 PLM-uitbreiding (strategisch)',  order: 2 },
+  powerbi: { label: '📊 Power BI-koppeling',            order: 3 },
+  shopify: { label: '🛒 Shopify-koppeling',             order: 4 },
+  techniek:{ label: '⚡ Sneller & stabieler',            order: 5 },
+  ux:      { label: '🎨 UX-vervolgpunten',              order: 6 },
+  samen:   { label: '👥 Samen doorontwikkelen',          order: 7 },
 };
 const ROADMAP_ITEMS = [
   // ── Meeting-beslispunten ──
@@ -5507,6 +5522,13 @@ const ROADMAP_ITEMS = [
     desc:'Power BI kan de Google Sheet lezen (web-connector), óf we bouwen een direct ?action=bi JSON/CSV-endpoint in het Apps Script. Voorkeur van de BI-specialist bepaalt de bouwrichting.' },
   { id:'shopify_gaps', cat:'meeting', prio:'mid',  title:'Vraag aan online specialist: beschrijvingen & afbeeldingen',
     desc:'De app dekt ~80% van een Shopify-productimport (barcode, prijs, kleur, HS-code, gewicht). Wat ontbreekt: maten/varianten, productbeschrijvingen en afbeeldingen — waar komen die vandaan?' },
+  // ── PLM-uitbreiding (strategisch) ──
+  { id:'plm_techpack', cat:'plm', prio:'mid', title:'Tech Pack & BOM — wel of niet in scope?',
+    desc:'Zie Info → PLM-proces, stap 2. De app kent nu stoffen/HS-codes/wasvoorschrift los, maar geen volledig technisch dossier per stijl (maattabellen, stikseldetails) of complete stuklijst (knopen, ritsen, labels). Grote bouwklus als dit gewenst is — eerst bepalen of dit een taak voor deze tool wordt of een apart systeem blijft.' },
+  { id:'plm_sourcing', cat:'plm', prio:'mid', title:'Sourcing: offertevergelijking & duurzaamheidscertificering',
+    desc:'Zie Info → PLM-proces, stap 3. Leverancier en FOB-prijs zijn bekend per stijl, maar er is geen live offerte-vergelijking (meerdere leveranciers naast elkaar) en geen certificerings-veld (OEKO-TEX, GOTS) in Stamdata → Leveranciers. Kleinste eerste stap: een certificering-veld toevoegen aan Leveranciers-stamdata.' },
+  { id:'plm_aql',      cat:'plm', prio:'laag', title:'Kwaliteitsborging (AQL-inspecties)',
+    desc:'Zie Info → PLM-proces, stap 5. Geen enkele registratie van inspectierapporten nu. Pas relevant zodra productie-tracking in de Collectielijst intensiever gebruikt gaat worden.' },
   // ── Power BI ──
   { id:'updated_at',   cat:'powerbi', prio:'hoog', title:'updatedAt consequent bijhouden',
     desc:'Alleen bulk-edits zetten nu een updatedAt — gewone bewerkingen niet. Nodig voor incrementeel verversen en wijzigingen volgen in Power BI. Kleine fix, grote waarde.' },
@@ -5526,6 +5548,11 @@ const ROADMAP_ITEMS = [
     desc:'Dubbele filtercondities, ongebruikte functies en namen als "msalLogin"/"SharePoint" (restanten van de oude opzet) verwarren iedere nieuwe ontwikkelaar.' },
   { id:'debounce',     cat:'techniek', prio:'laag', title:'Debounce op zoekveld',
     desc:'Bij honderden entries oké, maar met meerdere seizoenen erbij wordt her-renderen per toetsaanslag merkbaar. Kleine debounce (150 ms) volstaat.' },
+  // ── UX-vervolgpunten ──
+  { id:'ux_typescale', cat:'ux', prio:'mid', title:'Font-/kleurschaal volledig consistent maken',
+    desc:'Submenu-stijl, terugknop en breadcrumb zijn al gestandaardiseerd (v3.2). Wat nog los staat: tientallen inline font-size-waardes (9-13px) door elkaar voor vergelijkbare tekst. Vraagt een rustige sessie met tussentijds testen, niet iets voor vlak vóór een deadline.' },
+  { id:'ux_emptystate', cat:'ux', prio:'laag', title:'Lege-staat teksten consistent maken',
+    desc:'De `.empty-state`-CSS-klasse is al toegevoegd (v3.2) maar nog niet overal toegepast — "Geen data"/"Geen resultaten"/"Nog geen artikelen" staan nog met net andere bewoording en styling door de app heen.' },
   // ── Samen ontwikkelen ──
   { id:'readme',       cat:'samen', prio:'mid',  title:'README bijwerken naar de nieuwe scope',
     desc:'De architectuur-uitleg in README.md klopt nog, maar de titel/inleiding noemt nog "SS27 Product Data Tool" — logisch even meenemen bij de rebrand naar Collectie Cockpit.' },
@@ -7821,10 +7848,21 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
-    version: '3.2',
+    version: '3.3',
     date: '2026-07-16',
     author: 'Martijn Cornelissen',
     active: true,
+    features: [
+      { name: 'Terug/breadcrumb verplaatst naar onder het submenu', desc: 'Stonden eerst tussen de hoofdtab-balk en het submenu — logischer is: eerst navigeren (hoofdmenu → submenu), dan pas de "waar ben ik"-bevestiging vlak boven de inhoud. Verplaatst zich nu automatisch per tab (of bovenaan de inhoud bij tabs zonder submenu, zoals PRICAT/Lineplan)', tab: null, icon: '🧭' },
+      { name: 'Aanbevelingen volledig vervangen', desc: 'Verouderde/tegenstrijdige punten eruit (o.a. "stop met Excel" — terwijl we juist bewust meer Excel-bronnen zijn gaan gebruiken). Nieuw: 7 concrete, actuele actiepunten uit alles wat vandaag is ontdekt — 3 niet-herkende FW27-leveranciers, 13 nieuwe productgroepen, 17 te reconciliëren FW26-styles, marge-targets bevestigen, PLM-proces gaten, en meer', tab: 'info', icon: '💡' },
+      { name: 'Roadmap: 2 nieuwe categorieën', desc: '📚 PLM-uitbreiding (Tech Pack/BOM, Sourcing & duurzaamheid, AQL — elk met verwijzing naar de PLM-proces-tab) en 🎨 UX-vervolgpunten (font-/kleurschaal, lege-staat-consistentie — bewust nog niet gedaan, wel benoemd)', tab: 'info', icon: '🗺️' },
+    ]
+  },
+  {
+    version: '3.2',
+    date: '2026-07-16',
+    author: 'Martijn Cornelissen',
+    active: false,
     features: [
       { name: 'UX: submenu-hiërarchie consistent gemaakt', desc: 'Alle 6 submenu-tabs (Stamdata, Calculatielijst, Collectielijst, Seizoensvergelijking, Info, Instellingen) gebruiken nu dezelfde lichtgrijze kader-stijl, duidelijk te onderscheiden van de hoofdtabs (tekst+onderstreping). Voorheen had elke sectie zijn eigen losse styling', tab: null, icon: '🎨' },
       { name: 'Terugknop verplaatst uit de header', desc: 'Stond eerst naast het Brunotti-logo, op hetzelfde niveau als de branding. Nu op een eigen, kleinere secundaire regel direct boven de hoofdtab-balk — en verschijnt alleen als er ook echt geschiedenis is', tab: null, icon: '⬅️' },
