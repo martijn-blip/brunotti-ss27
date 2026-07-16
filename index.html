@@ -481,15 +481,18 @@
     </div>
 
     <div style="font-size:13px;line-height:1.6;color:var(--ink-mid)">
-      <p style="margin-bottom:14px">Deze app vervangt het oude, grote Excel-bestand. Het menu is opgedeeld in drie duidelijke delen: <b>Stamdata</b> (gedeelde basisgegevens), <b>Calculatielijst</b> (Invoer, Kwaliteit, Overzicht — prijzen en marges) en <b>Collectielijst</b> (productie- en sample-tracking). Alle data staat centraal en wordt gedeeld met het team via Google Sheets.</p>
+      <p style="margin-bottom:14px">De <b>Brunotti Collectie Cockpit</b> vervangt het oude, grote Excel-bestand en brengt collectiedata, PRICAT, lineplan en leveranciers-inzicht samen op één plek. Alle data staat centraal en wordt gedeeld met het team via Google Sheets.</p>
 
       <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
-        <div style="display:flex;gap:10px"><span style="font-size:18px">📂</span><div><b>Stamdata</b> — je basisgegevens: leveranciers, kleuren, stoffen, HS codes en pasvormen. Dit is de bron waar Invoer op leunt, dus houd dit up-to-date om typefouten elders te voorkomen.</div></div>
-        <div style="display:flex;gap:10px"><span style="font-size:18px">📝</span><div><b>Invoer</b> — hier voeg je een nieuw artikel toe of bewerk je een bestaand artikel. Marges worden automatisch live berekend. Klik altijd op <b>"✓ Valideer &amp; Opslaan"</b> om het echt op te slaan — dat controleert eerst op ontbrekende of foute velden.</div></div>
-        <div style="display:flex;gap:10px"><span style="font-size:18px">🔍</span><div><b>Kwaliteit</b> — geeft automatisch een overzicht van artikelen met ontbrekende of inconsistente Calculatielijst-data (prijzen, marges, MOQ), zodat fouten opvallen vóórdat ze een probleem worden.</div></div>
-        <div style="display:flex;gap:10px"><span style="font-size:18px">📋</span><div><b>Overzicht</b> — het totaaloverzicht van alle artikelen, met filters en export naar CSV.</div></div>
-          <div style="display:flex;gap:10px"><span style="font-size:18px">📦</span><div><b>Collectielijst</b> — productie- en sample-tracking per artikel: Swim, Sample-behoefte, Proto, SMS, Foto, Productie, Gewicht en Labels.</div></div>
-        <div style="display:flex;gap:10px"><span style="font-size:18px">⚙</span><div><b>Instellingen</b> — synchroniseren met het team, back-ups, versiegeschiedenis, changelog en deze handleiding, nu allemaal netjes in eigen tabbladen.</div></div>
+        <div style="display:flex;gap:10px"><span style="font-size:18px">📂</span><div><b>Stamdata</b> — je basisgegevens: leveranciers, kleuren, stoffen, HS codes, pasvormen, artikelcode-decoder en Segmenten &amp; Groepen (PRICAT-taxonomie). Dit is de bron waar Invoer op leunt, dus houd dit up-to-date om typefouten elders te voorkomen.</div></div>
+        <div style="display:flex;gap:10px"><span style="font-size:18px">📊</span><div><b>Calculatielijst</b> — Invoer (nieuw artikel toevoegen/bewerken, marges live berekend, altijd op <b>"✓ Valideer &amp; Opslaan"</b> klikken), Kwaliteit (ontbrekende/inconsistente data, incl. seizoensfilter) en Overzicht (alle artikelen, filters, CSV-export).</div></div>
+        <div style="display:flex;gap:10px"><span style="font-size:18px">📦</span><div><b>Collectielijst</b> — productie- en sample-tracking per artikel: Swim, Sample-behoefte, Proto, SMS, Foto, Productie, Gewicht en Labels.</div></div>
+        <div style="display:flex;gap:10px"><span style="font-size:18px">🗂️</span><div><b>PRICAT</b> — de leidende verkoopcatalogus (alle seizoenen). Artikelen die hier wél in staan maar nog niet in Calculatielijst/Collectielijst, worden duidelijk in rood gemarkeerd.</div></div>
+        <div style="display:flex;gap:10px"><span style="font-size:18px">📈</span><div><b>Seizoensvergelijking</b> — twee subtabs: <b>Overzicht</b> (nieuw/terugkerend/vervallen tussen twee seizoenen, verdeling per segment/groep/leverancier/collectie/marge, meerjarige trend, "mogelijk hernoemd"-detectie) en <b>🏭 Leveranciers</b> (per leverancier: assortiment, margetrend zomer/winter apart, prijspositionering t.o.v. vergelijkbare leveranciers, annuleringen).</div></div>
+        <div style="display:flex;gap:10px"><span style="font-size:18px">📐</span><div><b>Lineplan FW27</b> — het strategische plan vóór de Calculatielijst: groei-traject # opties, Good/Better/Best-verdeling, SKU-lijst met commerciële context.</div></div>
+        <div style="display:flex;gap:10px"><span style="font-size:18px">⬇</span><div><b>Export</b> — CSV/Excel/Power BI-export van je data.</div></div>
+        <div style="display:flex;gap:10px"><span style="font-size:18px">ℹ️</span><div><b>Info</b> — Data-inzichten per bronbestand (wat gevonden/opgelost/nog te doen), Aanbevelingen &amp; Actiepunten, Roadmap en Changelog.</div></div>
+        <div style="display:flex;gap:10px"><span style="font-size:18px">⚙</span><div><b>Instellingen</b> — synchroniseren met het team, back-ups, versiegeschiedenis, browseropslag-beheer en deze handleiding.</div></div>
       </div>
 
       <hr class="divider" style="margin:14px 0">
@@ -503,6 +506,15 @@
         <li style="margin-bottom:6px">Voordat elke automatische of handmatige sync jouw wijzigingen wegschrijft, checkt de app eerst of iemand anders ondertussen iets heeft gesynchroniseerd — zo niet stil overschreven, maar een duidelijke melding, zodat niemands werk verloren gaat.</li>
       </ul>
 
+      <hr class="divider" style="margin:14px 0">
+
+      <div style="font-weight:700;margin-bottom:8px">🗂️ Belangrijk om te weten over de brondata</div>
+      <ul style="margin:0 0 4px 18px;padding:0">
+        <li style="margin-bottom:6px"><b>PRICAT is leidend</b> voor productbenamingen, segmenten en productgroepen — bij twijfel over een schrijfwijze, PRICAT wint.</li>
+        <li style="margin-bottom:6px">Items gemarkeerd met <b>⏳ voorlopig</b> (bv. FW27) staan nog niet écht in PRICAT, maar zijn tijdelijk aangevuld uit een Collectielijst-bronbestand — ze worden vervangen zodra de definitieve PRICAT-data er is.</li>
+        <li style="margin-bottom:6px">Seizoensvergelijking matcht op <b>stijlnaam</b>, niet op stijlnummer — stijlnummers coderen het seizoen zelf, dus die zijn nooit gelijk tussen seizoenen.</li>
+      </ul>
+
       <p style="margin-top:14px;font-size:12px;color:var(--ink-low)">Deze uitleg is op elk moment opnieuw op te roepen via de "Help"-knop rechtsboven.</p>
     </div>
   </div>
@@ -513,7 +525,7 @@
   <div class="tab" onclick="switchTab('calculatielijst')">📊 Calculatielijst</div>
   <div class="tab" onclick="switchTab('collectielijst')">📦 Collectielijst</div>
   <div class="tab" onclick="switchTab('pricat')">🗂️ PRICAT</div>
-  <div class="tab" onclick="switchTab('seizoen')">📊 Seizoensvergelijking</div>
+  <div class="tab" onclick="switchTab('seizoen')">📈 Seizoensvergelijking</div>
   <div class="tab" onclick="switchTab('lineplan')">📐 Lineplan FW27</div>
   <div class="tab" onclick="switchTab('export')">⬇ Export</div>
   <div class="tab" onclick="switchTab('info')" style="margin-left:auto">ℹ️ Info</div>
@@ -1399,15 +1411,16 @@
     <div class="card">
       <div style="font-size:15px;font-weight:700;margin-bottom:14px">👋 Hoe werkt deze app?</div>
       <div style="font-size:13px;line-height:1.6;color:var(--ink-mid)">
-        <p style="margin-bottom:14px">Deze app vervangt het oude, grote Excel-bestand. Het menu is opgedeeld in drie duidelijke delen: <b>Stamdata</b> (gedeelde basisgegevens), <b>Calculatielijst</b> (Invoer, Kwaliteit, Overzicht — prijzen en marges) en <b>Collectielijst</b> (productie- en sample-tracking). Alle data staat centraal en wordt gedeeld met het team via Google Sheets.</p>
+        <p style="margin-bottom:14px">De <b>Brunotti Collectie Cockpit</b> vervangt het oude, grote Excel-bestand en brengt collectiedata, PRICAT, lineplan en leveranciers-inzicht samen op één plek. Alle data staat centraal en wordt gedeeld met het team via Google Sheets.</p>
 
         <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
-          <div style="display:flex;gap:10px"><span style="font-size:18px">📂</span><div><b>Stamdata</b> — je basisgegevens: leveranciers, kleuren, stoffen, HS codes en pasvormen. Dit is de bron waar Invoer op leunt, dus houd dit up-to-date om typefouten elders te voorkomen.</div></div>
-          <div style="display:flex;gap:10px"><span style="font-size:18px">📝</span><div><b>Invoer</b> — hier voeg je een nieuw artikel toe of bewerk je een bestaand artikel. Marges worden automatisch live berekend. Klik altijd op <b>"✓ Valideer &amp; Opslaan"</b> om het echt op te slaan — dat controleert eerst op ontbrekende of foute velden.</div></div>
-          <div style="display:flex;gap:10px"><span style="font-size:18px">🔍</span><div><b>Kwaliteit</b> — geeft automatisch een overzicht van artikelen met ontbrekende of inconsistente Calculatielijst-data (prijzen, marges, MOQ), zodat fouten opvallen vóórdat ze een probleem worden.</div></div>
-          <div style="display:flex;gap:10px"><span style="font-size:18px">📋</span><div><b>Overzicht</b> — het totaaloverzicht van alle artikelen, met filters en export naar CSV.</div></div>
+          <div style="display:flex;gap:10px"><span style="font-size:18px">📂</span><div><b>Stamdata</b> — je basisgegevens: leveranciers, kleuren, stoffen, HS codes, pasvormen, artikelcode-decoder en Segmenten &amp; Groepen (PRICAT-taxonomie). Dit is de bron waar Invoer op leunt, dus houd dit up-to-date om typefouten elders te voorkomen.</div></div>
+          <div style="display:flex;gap:10px"><span style="font-size:18px">📊</span><div><b>Calculatielijst</b> — Invoer (nieuw artikel toevoegen/bewerken, marges live berekend, altijd op <b>"✓ Valideer &amp; Opslaan"</b> klikken), Kwaliteit (ontbrekende/inconsistente data, incl. seizoensfilter) en Overzicht (alle artikelen, filters, CSV-export).</div></div>
           <div style="display:flex;gap:10px"><span style="font-size:18px">📦</span><div><b>Collectielijst</b> — productie- en sample-tracking per artikel: Swim, Sample-behoefte, Proto, SMS, Foto, Productie, Gewicht en Labels.</div></div>
-          <div style="display:flex;gap:10px"><span style="font-size:18px">⚙</span><div><b>Instellingen</b> — synchroniseren met het team, back-ups, versiegeschiedenis, changelog en deze handleiding.</div></div>
+          <div style="display:flex;gap:10px"><span style="font-size:18px">🗂️</span><div><b>PRICAT</b> — de leidende verkoopcatalogus (alle seizoenen). Artikelen die hier wél in staan maar nog niet in Calculatielijst/Collectielijst, worden duidelijk in rood gemarkeerd.</div></div>
+          <div style="display:flex;gap:10px"><span style="font-size:18px">📈</span><div><b>Seizoensvergelijking</b> — Overzicht (nieuw/terugkerend/vervallen, verdeling per segment/groep/leverancier/collectie/marge, meerjarige trend) en <b>🏭 Leveranciers</b> (per leverancier: assortiment, margetrend zomer/winter apart, prijspositionering, annuleringen).</div></div>
+          <div style="display:flex;gap:10px"><span style="font-size:18px">📐</span><div><b>Lineplan FW27</b> — het strategische plan vóór de Calculatielijst: groei-traject # opties, Good/Better/Best, SKU-lijst met commerciële context.</div></div>
+          <div style="display:flex;gap:10px"><span style="font-size:18px">⚙</span><div><b>Instellingen</b> — synchroniseren met het team, back-ups, versiegeschiedenis, browseropslag-beheer en deze handleiding.</div></div>
         </div>
 
         <hr class="divider" style="margin:14px 0">
@@ -1419,6 +1432,15 @@
           <li style="margin-bottom:6px"><b>Synchroniseren met team</b> en <b>Ophalen van team</b> (in Instellingen) blijven beschikbaar om dit handmatig te forceren, bijvoorbeeld vlak voordat je het tabblad sluit.</li>
           <li style="margin-bottom:6px">Bij het openen van de app wordt altijd eerst gecheckt of er een nieuwere teamversie is, en die wordt dan automatisch opgehaald.</li>
           <li style="margin-bottom:6px">Voordat elke automatische of handmatige sync jouw wijzigingen wegschrijft, checkt de app eerst of iemand anders ondertussen iets heeft gesynchroniseerd — zo niet stil overschreven, maar een duidelijke melding, zodat niemands werk verloren gaat.</li>
+        </ul>
+
+        <hr class="divider" style="margin:14px 0">
+
+        <div style="font-weight:700;margin-bottom:8px">🗂️ Belangrijk om te weten over de brondata</div>
+        <ul style="margin:0 0 4px 18px;padding:0">
+          <li style="margin-bottom:6px"><b>PRICAT is leidend</b> voor productbenamingen, segmenten en productgroepen.</li>
+          <li style="margin-bottom:6px">Items gemarkeerd met <b>⏳ voorlopig</b> staan nog niet écht in PRICAT, maar zijn tijdelijk aangevuld uit een Collectielijst-bronbestand.</li>
+          <li style="margin-bottom:6px">Seizoensvergelijking matcht op <b>stijlnaam</b>, niet op stijlnummer — stijlnummers coderen het seizoen zelf.</li>
         </ul>
       </div>
     </div>
@@ -1463,7 +1485,7 @@
   <!-- ── Power BI export ── -->
   <div class="card" style="margin-bottom:16px">
     <div style="font-size:14px;font-weight:700;margin-bottom:3px">📊 Power BI dataset (CSV)</div>
-    <div style="font-size:12px;color:var(--ink-low);max-width:640px;line-height:1.5;margin-bottom:12px">Platte, BI-klare dataset: één rij per stijl+kleur met een vaste sleutelkolom (<code>key</code>), stabiele Engelse kolomnamen, ISO-datums en getallen als échte getallen (punt-decimalen, geen €-tekens). Direct te laden in Power BI via "Get data → Text/CSV". Dezelfde structuur komt later ook als vaste BI_Export-tab in de Google Sheet, zodat Power BI automatisch ververst na elke sync.</div>
+    <div style="font-size:12px;color:var(--ink-low);max-width:640px;line-height:1.5;margin-bottom:12px">Platte, BI-klare dataset: één rij per stijl+kleur met een vaste sleutelkolom (<code>key</code>), stabiele Engelse kolomnamen, ISO-datums en getallen als échte getallen (punt-decimalen, geen €-tekens). Direct te laden in Power BI via "Get data → Text/CSV". Dezelfde structuur staat ook als vaste <b>BI_Export</b>-tab in de Google Sheet, die automatisch ververst na elke sync — Power BI kan die tab dus ook rechtstreeks als bron gebruiken via "Get data → Web/Google Sheets", zonder handmatige CSV-download.</div>
     <button class="btn btn-primary btn-sm" onclick="exportBiCSV()">⬇ Download Power BI CSV</button>
   </div>
 
@@ -1497,6 +1519,18 @@
     <div class="card" style="margin-bottom:16px">
       <div style="font-size:15px;font-weight:700;margin-bottom:2px">🔍 Data-inzichten — per bronbestand</div>
       <div style="font-size:12px;color:var(--ink-mid)">Bevindingen uit alle bronbestanden die tot nu toe zijn geanalyseerd, gegroepeerd per bestand: wat we vonden, wat er al is opgelost in de app, en welke verbeteringen nog openstaan.</div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;border-color:var(--blue)">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">🚀 v3.0 — Brunotti Collectie Cockpit: wat is er bijgekomen</div>
+      <div style="font-size:13px;line-height:1.7;color:var(--ink-mid)">
+        <p style="margin:0 0 8px">Dit is geen nieuw bronbestand, maar een nieuwe manier om de bestaande bronnen (PRICAT, FW27-Collectielijst, FW26-verrijking) te bevragen — daarom hier los benoemd i.p.v. in een bronbestand-sectie hierboven:</p>
+        <ul style="margin:0 0 0 18px;padding:0">
+          <li style="margin-bottom:5px">Seizoensvergelijking is herbouwd tot één overzicht (was twee losse, niet-gesynchroniseerde subtabs).</li>
+          <li style="margin-bottom:5px">Nieuwe <b>🏭 Leveranciers</b>-tab: per leverancier assortiment, margetrend (zomer/winter apart), prijspositionering t.o.v. vergelijkbare leveranciers, en FW26-annuleringen — allemaal live berekend uit de bestaande bronnen, geen nieuwe data nodig.</li>
+          <li style="margin-bottom:0">Good/Better/Best-schrijfwijze opgeschoond over FW26/FW27 heen (324 rijen).</li>
+        </ul>
+      </div>
     </div>
 
     <div class="card" style="margin-bottom:16px">
@@ -5289,8 +5323,6 @@ const ROADMAP_ITEMS = [
   { id:'shopify_gaps', cat:'meeting', prio:'mid',  title:'Vraag aan online specialist: beschrijvingen & afbeeldingen',
     desc:'De app dekt ~80% van een Shopify-productimport (barcode, prijs, kleur, HS-code, gewicht). Wat ontbreekt: maten/varianten, productbeschrijvingen en afbeeldingen — waar komen die vandaan?' },
   // ── Power BI ──
-  { id:'bi_tab',       cat:'powerbi', prio:'hoog', title:'Vaste "BI_Export"-tab in de Google Sheet',
-    desc:'De Power BI CSV-download bestaat al (menu Export). Open punt: dezelfde platte dataset als vaste tab in de Google Sheet, zodat Power BI automatisch ververst na elke sync — vereist een kleine Apps Script-uitbreiding (code ligt klaar).' },
   { id:'updated_at',   cat:'powerbi', prio:'hoog', title:'updatedAt consequent bijhouden',
     desc:'Alleen bulk-edits zetten nu een updatedAt — gewone bewerkingen niet. Nodig voor incrementeel verversen en wijzigingen volgen in Power BI. Kleine fix, grote waarde.' },
   { id:'bi_endpoint',  cat:'powerbi', prio:'laag', title:'Direct ?action=bi endpoint (optioneel)',
@@ -5301,23 +5333,19 @@ const ROADMAP_ITEMS = [
   { id:'shopify_mcp',  cat:'shopify', prio:'laag', title:'Directe Shopify-koppeling (later)',
     desc:'Via de Shopify- en Lifetimely-koppeling kunnen producten later rechtstreeks vergeleken/aangemaakt worden zonder CSV-tussenstap, en sluit margedata aan op fase 3 (inkooplijst per leverancier).' },
   // ── Techniek ──
-  { id:'seed_data',    cat:'techniek', prio:'hoog', title:'Embedded seed-data verwijderen (1,9 MB → ~300 KB)',
-    desc:'~1,6 MB van de app is embedded Excel-data die na de Drive-migratie verouderde ballast is — én een risico (nieuwe browser laadt eerst oude data). Vooraf eenmalig verifiëren dat de Drive-data compleet is.' },
+  { id:'seed_data',    cat:'techniek', prio:'mid',  title:'Embedded brondata (3,7 MB) — bewuste keuze, wel een grens in de gaten houden',
+    desc:'Was ooit "verouderde ballast om te verwijderen" — inmiddels het omgekeerde: de app bevat nu bewust PRICAT (10.707 rijen), FW26/FW27-verrijking en Lineplan als embedded referentiedata, precies om Seizoensvergelijking en Leveranciers-inzicht te laten werken. Dat is een terechte productkeuze, geen bug. Wel iets om te bewaken: bij een volgend seizoen (nog meer PRICAT-geschiedenis, of FW28) groeit dit verder — op enig moment kan dat de laadtijd gaan raken.' },
   { id:'html_escape',  cat:'techniek', prio:'mid',  title:'HTML-escaping in tabellen',
     desc:'Een productnaam met < of een aanhalingsteken kan nu een tabel visueel breken. Centrale escape-functie toevoegen — puur stabiliteit.' },
-  { id:'action_meta',  cat:'techniek', prio:'mid',  title:'Lichte ?action=meta voor auto-sync',
-    desc:'Vóór elke automatische push wordt nu de complete dataset gedownload, alleen om het tijdstip te checken. Een meta-endpoint (alleen savedAt/savedBy) maakt auto-sync vele malen lichter — relevant zodra er meerdere seizoenen in staan.' },
   { id:'opruimen',     cat:'techniek', prio:'laag', title:'Dead code & legacy-namen opruimen',
     desc:'Dubbele filtercondities, ongebruikte functies en namen als "msalLogin"/"SharePoint" (restanten van de oude opzet) verwarren iedere nieuwe ontwikkelaar.' },
   { id:'debounce',     cat:'techniek', prio:'laag', title:'Debounce op zoekveld',
-    desc:'Bij 686 entries oké, maar bij meerdere seizoenen wordt her-renderen per toetsaanslag merkbaar. Kleine debounce (150 ms) volstaat.' },
+    desc:'Bij honderden entries oké, maar met meerdere seizoenen erbij wordt her-renderen per toetsaanslag merkbaar. Kleine debounce (150 ms) volstaat.' },
   // ── Samen ontwikkelen ──
-  { id:'gs_in_repo',   cat:'samen', prio:'hoog', title:'Apps Script-code in de repo zetten',
-    desc:'De backend-code staat nu alléén in Google. In de repo (bijv. /backend/Code.gs) = versiebeheer + iedereen kan meekijken.' },
-  { id:'readme',       cat:'samen', prio:'hoog', title:'README met architectuur & valkuilen',
-    desc:'GitHub Pages + Apps Script + Drive uitgelegd, plus de bekende valkuilen (CORS bij lokale bestanden, text/plain-header). Daarmee snappen de BI- en online specialist direct hoe alles hangt.' },
+  { id:'readme',       cat:'samen', prio:'mid',  title:'README bijwerken naar de nieuwe scope',
+    desc:'De architectuur-uitleg in README.md klopt nog, maar de titel/inleiding noemt nog "SS27 Product Data Tool" — logisch even meenemen bij de rebrand naar Collectie Cockpit.' },
   { id:'git_tags',     cat:'samen', prio:'mid',  title:'Releases taggen in git',
-    desc:'Elke release een git-tag (v2.1, v2.2, ...) voor makkelijke rollback naar een werkende versie.' },
+    desc:'Elke release een git-tag (v2.1, v2.2, ... nu v3.0) voor makkelijke rollback naar een werkende versie.' },
   { id:'branch_prot',  cat:'samen', prio:'laag', title:'Branch-protectie zodra tweede ontwikkelaar meedoet',
     desc:'Wijzigingen via pull requests op een beschermde main-branch — voorkomt dat twee mensen elkaars werk overschrijven.' },
 ];
@@ -7599,10 +7627,23 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
-    version: '3.0',
+    version: '3.1',
     date: '2026-07-15',
     author: 'Martijn Cornelissen',
     active: true,
+    features: [
+      { name: 'Handleiding volledig herschreven', desc: 'De ingebouwde handleiding (Help-knop + Instellingen) noemde nog alleen Stamdata/Calculatielijst/Collectielijst uit de begintijd. Nu alle 9 tabs, inclusief PRICAT, Seizoensvergelijking (Overzicht + Leveranciers), Lineplan, en een nieuw blokje over hoe met de brondata om te gaan (PRICAT is leidend, ⏳ voorlopig-markering, matching op stijlnaam)', tab: 'versies', icon: '📖' },
+      { name: 'Roadmap opgeschoond', desc: '3 punten verwijderd die al gerealiseerd bleken (BI_Export-tab, Apps Script in de repo, lichte meta-endpoint). "Embedded seed-data verwijderen" stond er nog als "1,9MB→300KB weghalen" terwijl we inmiddels bewust PRICAT/FW26/FW27/Lineplan hebben toegevoegd (nu 3,7MB) — tekst bijgewerkt naar de huidige realiteit', tab: 'info', icon: '🗺️' },
+      { name: 'Data-inzichten: v3.0-samenvatting toegevoegd', desc: 'Nieuw kaartje dat uitlegt wat er in v3.0 is bijgekomen (Leveranciers-tab, samengevoegd Overzicht, GBB-opschoning) — los van de per-bronbestand-secties, want het is geen nieuw bronbestand maar een nieuwe manier om de bestaande bronnen te bevragen', tab: 'info', icon: '🚀' },
+      { name: 'Export-tab: verouderde tekst gecorrigeerd', desc: 'De Power BI-uitleg zei nog "de BI_Export-tab komt later", terwijl die al sinds 6 juli in de Google Sheet staat en direct als Power BI-bron gebruikt kan worden — kon het team op het verkeerde been zetten', tab: 'export', icon: '🔌' },
+      { name: 'Klein icoon-conflict opgelost', desc: 'Seizoensvergelijking en Calculatielijst deelden hetzelfde 📊-icoon in het hoofdmenu — Seizoensvergelijking is nu 📈', tab: null, icon: '🎨' },
+    ]
+  },
+  {
+    version: '3.0',
+    date: '2026-07-15',
+    author: 'Martijn Cornelissen',
+    active: false,
     features: [
       { name: 'Rebrand: Brunotti Collectie Cockpit', desc: 'De tool is allang niet meer alleen "SS27 Product Data" — hij dekt nu meerdere seizoenen, PRICAT, Lineplan, Seizoensvergelijking en Leveranciers-inzicht. Nieuwe naam in header en browsertab-titel', tab: null, icon: '🚀' },
       { name: 'Seizoensvergelijking en Bevindingen samengevoegd tot Overzicht', desc: 'Geen twee losse subtabs met eigen (niet-gesynchroniseerde) filters meer — nu één doorlopende pagina met één filterset: KPI-kaarten, samenvatting, meerjarige trend, groei/krimp-inzichten, Verdeling per seizoen, en de Nieuw/Terugkerend/Vervallen-detaillijsten, in logische leesvolgorde', tab: 'seizoen', icon: '🔀' },
