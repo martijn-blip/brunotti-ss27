@@ -50,18 +50,18 @@
     display: none;
     align-items: center;
     gap: 5px;
-    background: rgba(255,255,255,.1);
-    border: 1px solid rgba(255,255,255,.2);
-    color: #fff;
+    background: transparent;
+    border: none;
+    color: var(--ink-low);
     border-radius: var(--radius);
-    padding: 4px 10px;
-    font-size: 12px;
+    padding: 3px 4px;
+    font-size: 11px;
     font-weight: 600;
     cursor: pointer;
-    transition: background .15s;
+    transition: color .15s;
     white-space: nowrap;
   }
-  .back-btn:hover { background: rgba(255,255,255,.2); }
+  .back-btn:hover { color: var(--blue); }
   .back-btn svg { flex-shrink: 0; }
   .logo { font-weight: 700; font-size: 15px; letter-spacing: 0.08em; }
   .logo span { color: #aaa; font-weight: 400; margin-left: 10px; font-size: 12px; letter-spacing: 0; }
@@ -103,6 +103,22 @@
     user-select: none;
     white-space: nowrap;
   }
+  /* Eén vaste submenu-stijl door de hele app: duidelijk "niveau 2" —
+     lichtgrijs kader, subtiel, altijd te onderscheiden van de hoofdtabs
+     (die tekst+onderstreping gebruiken, geen kader). */
+  .subtab-bar {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    align-items: center;
+    background: var(--fill);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 5px;
+    width: fit-content;
+    margin-bottom: 16px;
+  }
+  .subtab-bar .btn { font-size: 12px; padding: 6px 12px; }
 
   /* ── LAYOUT ── */
   .main { max-width: 1200px; margin: 0 auto; padding: 24px; }
@@ -391,8 +407,29 @@
     transform: translateY(80px);
     opacity: 0;
     transition: all .25s;
+    border-left: 4px solid var(--teal);
   }
   #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.toast-error   { border-left-color: var(--red); }
+  #toast.toast-warning { border-left-color: var(--amber); }
+  #toast.toast-success { border-left-color: var(--teal); }
+
+  /* Zichtbare focus-ring voor toetsenbordgebruik — knoppen, links en
+     klikbare elementen waren tot nu toe onzichtbaar bij tab-navigatie. */
+  button:focus-visible, a:focus-visible, .btn:focus-visible,
+  [onclick]:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+  }
+
+  /* Eén vaste stijl voor "geen data"-meldingen — deze stonden verspreid
+     door de app met net andere kleuren/padding per plek. */
+  .empty-state {
+    text-align: center;
+    color: var(--ink-low);
+    padding: 32px 16px;
+    font-size: 12px;
+  }
 
   @media (max-width: 768px) {
     .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
@@ -456,10 +493,6 @@
 
 <header>
   <div style="display:flex;align-items:center;gap:14px">
-    <button class="back-btn" id="backBtn" onclick="goBack()" title="Terug naar vorig scherm" style="margin:0">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      Terug
-    </button>
     <div class="logo" style="display:flex;align-items:flex-start;gap:10px">
       <img src="data:image/png;base64,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" alt="Brunotti" style="height:22px;width:auto;display:block">
       <span style="line-height:22px">Collectie Cockpit · v<span id="headerVersion">1.9</span></span>
@@ -520,6 +553,14 @@
   </div>
 </div>
 
+<div id="backBtnRow" style="display:none;padding:6px 24px 0;background:var(--white)">
+  <button class="back-btn" id="backBtn" onclick="goBack()" title="Terug naar vorig scherm" style="margin:0">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    Terug
+  </button>
+</div>
+<div id="breadcrumb" style="padding:6px 24px 0;background:var(--white);font-size:11px;color:var(--ink-low)"></div>
+
 <div class="tabs">
   <div class="tab active" onclick="switchTab('stamdata')">📂 Stamdata</div>
   <div class="tab" onclick="switchTab('calculatielijst')">📊 Calculatielijst</div>
@@ -535,7 +576,7 @@
 <!-- ══ TAB: INVOER ══════════════════════════════════════════ -->
 <div id="tab-calculatielijst" class="main hidden">
 
-  <div style="display:flex;gap:8px;margin-bottom:16px">
+  <div class="subtab-bar">
     <button class="btn btn-primary btn-sm calc-tab active" onclick="setCalcTab('invoer')" id="ctab-invoer">📝 Invoer</button>
     <button class="btn btn-ghost btn-sm calc-tab" onclick="setCalcTab('controle')" id="ctab-controle">🔍 Kwaliteit</button>
     <button class="btn btn-ghost btn-sm calc-tab" onclick="setCalcTab('overzicht')" id="ctab-overzicht">📋 Overzicht</button>
@@ -985,7 +1026,7 @@
 
   <!-- Quality summary banner -->
   <!-- Sub-tabs -->
-  <div style="display:flex;gap:4px;margin-bottom:14px;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:6px;width:fit-content;flex-wrap:wrap">
+  <div class="subtab-bar">
     <div class="tab-group-label" style="border-left:none;padding-left:0">📊 CALCULATIELIJST</div>
     <button class="btn btn-primary btn-sm stam-tab active" onclick="setStamTab('vendors')" id="stab-vendors">🏭 Leveranciers</button>
     <button class="btn btn-ghost btn-sm stam-tab" onclick="setStamTab('colours')" id="stab-colours">🎨 Kleuren</button>
@@ -1171,7 +1212,7 @@
 <!-- ══ TAB: COLLECTIELIJST ═════════════════════════════════════ -->
 <div id="tab-collectielijst" class="main hidden">
 
-  <div style="display:flex;gap:8px;margin-bottom:16px">
+  <div class="subtab-bar">
     <button class="btn btn-primary btn-sm col-tab active" onclick="setColTab('invoer')" id="coltab-invoer">📝 Invoer</button>
     <button class="btn btn-ghost btn-sm col-tab" onclick="setColTab('controle')" id="coltab-controle">🔍 Kwaliteit</button>
     <button class="btn btn-ghost btn-sm col-tab" onclick="setColTab('overzicht')" id="coltab-overzicht">📋 Overzicht</button>
@@ -1281,7 +1322,7 @@
 
 
   <!-- Sub-tab bar -->
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+  <div class="subtab-bar">
     <button class="btn btn-primary btn-sm inst-tab active" onclick="setInstTab('sync')" id="itab-sync">⚙ Sync &amp; Instellingen</button>
     <button class="btn btn-ghost btn-sm inst-tab" onclick="setInstTab('versies')" id="itab-versies">🕐 Versiegeschiedenis</button>
     <button class="btn btn-ghost btn-sm inst-tab" onclick="setInstTab('handleiding')" id="itab-handleiding">❓ Handleiding</button>
@@ -1507,11 +1548,12 @@
 <!-- ══ TAB: INFO ══════════════════════════════════════════════ -->
 <div id="tab-info" class="main hidden">
 
-  <div style="display:flex;gap:8px;margin-bottom:16px">
+  <div class="subtab-bar">
     <button class="btn btn-primary btn-sm info-tab active" onclick="setInfoTab('inzichten')" id="infotab-inzichten">🔍 Data-inzichten</button>
     <button class="btn btn-ghost btn-sm info-tab" onclick="setInfoTab('aanbevelingen')" id="infotab-aanbevelingen">✅ Aanbevelingen &amp; Actiepunten</button>
     <button class="btn btn-ghost btn-sm info-tab" onclick="setInfoTab('roadmap')" id="infotab-roadmap">🗺️ Roadmap</button>
     <button class="btn btn-ghost btn-sm info-tab" onclick="setInfoTab('changelog')" id="infotab-changelog">📋 Changelog</button>
+    <button class="btn btn-ghost btn-sm info-tab" onclick="setInfoTab('plm')" id="infotab-plm">📚 PLM-proces</button>
   </div>
 
   <!-- ── Sub-tab: Data-inzichten ───────────────────────────────── -->
@@ -1722,12 +1764,135 @@
     </div>
   </div>
 
+  <!-- ── Sub-tab: PLM-proces ─────────────────────────────────────── -->
+  <div id="info-plm" class="hidden">
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">📚 Het Fashion PLM-proces — van idee tot winkel</div>
+      <div style="font-size:12px;color:var(--ink-mid);line-height:1.6">Een fashionbedrijf doorloopt binnen een Fashion PLM-systeem (Product Lifecycle Management) 6 stappen om een collectie van idee naar de winkel te brengen. Bij elke stap staat hier ook aangegeven wat de <b>Brunotti Collectie Cockpit</b> daarvan al ondersteunt, en wat (nog) niet — zodat in één oogopslag duidelijk is waar deze tool past in het grotere geheel.</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:11px">
+        <span><span class="badge badge-ok" style="font-size:10px">✓ ondersteund</span></span>
+        <span><span class="badge badge-warn" style="font-size:10px">◐ deels</span></span>
+        <span><span class="badge badge-error" style="font-size:10px">✕ nog niet</span></span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">1️⃣ Trendanalyse, Planning &amp; Budgettering</div>
+      <div style="font-size:12px;color:var(--ink-low);margin-bottom:10px">Conceptfase: ontwerpers en merchandisers bepalen de richting van de nieuwe collectie.</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div><b>Trendwatching</b> — moodboards, kleurkaarten en stofstalen verzamelen</div>
+          <span class="badge badge-error" style="font-size:10px;white-space:nowrap">✕ nog niet</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div><b>Collectieplanning</b> — hoeveel stijlen (broeken, shirts, jassen) er nodig zijn</div>
+          <span class="badge badge-ok" style="font-size:10px;white-space:nowrap">✓ Lineplan FW27</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0">
+          <div><b>Budgettering</b> — doelstellingen voor kostprijs en marges vastleggen</div>
+          <span class="badge badge-warn" style="font-size:10px;white-space:nowrap">◐ marge-targets in Calculatielijst, geen apart budgetplan</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">2️⃣ Design &amp; Technische Specificaties (Tech Pack)</div>
+      <div style="font-size:12px;color:var(--ink-low);margin-bottom:10px">De ontwerpers vertalen ideeën naar concrete, digitale ontwerpen.</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div><b>3D Ontwerp</b> — koppeling met designsoftware (Adobe Illustrator, CLO 3D)</div>
+          <span class="badge badge-error" style="font-size:10px;white-space:nowrap">✕ nog niet</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div><b>Tech Pack maken</b> — maattabellen, stikseldetails, wasvoorschriften</div>
+          <span class="badge badge-warn" style="font-size:10px;white-space:nowrap">◐ wasvoorschrift in Collectielijst, geen volledig tech pack</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0">
+          <div><b>BOM opstellen</b> — hoofdstof, voering, knopen, ritsen, labels</div>
+          <span class="badge badge-warn" style="font-size:10px;white-space:nowrap">◐ Stoffen/HS Codes in Stamdata, geen volledige stuklijst per stijl</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">3️⃣ Sourcing &amp; Leveranciersselectie</div>
+      <div style="font-size:12px;color:var(--ink-low);margin-bottom:10px">Het bedrijf zoekt de juiste fabrieken en leveranciers voor materialen en productie.</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div><b>Offertes aanvragen</b> — Tech Pack delen met fabrikanten via een leveranciersportaal</div>
+          <span class="badge badge-error" style="font-size:10px;white-space:nowrap">✕ nog niet</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div><b>Kostenvergelijking</b> — prijzen, MOQ en levertijden vergelijken</div>
+          <span class="badge badge-warn" style="font-size:10px;white-space:nowrap">◐ FOB/leverancier per stijl bekend, geen live offerte-vergelijking</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0">
+          <div><b>Duurzaamheid</b> — certificeringen zoals OEKO-TEX of GOTS controleren</div>
+          <span class="badge badge-error" style="font-size:10px;white-space:nowrap">✕ nog niet — mogelijke aanvulling op Leveranciers-stamdata</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">4️⃣ Proefmonsters &amp; Maatvoering (Sampling &amp; Fitting)</div>
+      <div style="font-size:12px;color:var(--ink-low);margin-bottom:10px">Vóór massaproductie moeten pasvorm en kwaliteit perfect zijn.</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div><b>Sample-beheer</b> — Proto 1, Proto 2, SMS (Sales Man Samples) aanvragen en opvolgen</div>
+          <span class="badge badge-ok" style="font-size:10px;white-space:nowrap">✓ Collectielijst (Proto/SMS/Sample-behoefte)</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div><b>Fitting-sessies</b> — doorpassen op modellen, feedback en maataanpassingen loggen</div>
+          <span class="badge badge-warn" style="font-size:10px;white-space:nowrap">◐ Pasvorm-stamdata aanwezig, geen sessie-logging</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0">
+          <div><b>Goedkeuring</b> — de Golden Sample definitief goedkeuren voor productie</div>
+          <span class="badge badge-warn" style="font-size:10px;white-space:nowrap">◐ Status-veld (concept/review/goedgekeurd), geen aparte Golden Sample-stap</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">5️⃣ Productie &amp; Kwaliteitscontrole</div>
+      <div style="font-size:12px;color:var(--ink-low);margin-bottom:10px">De fabriek start de massaproductie van de goedgekeurde kledingstukken.</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div><b>Voortgangsbewaking</b> — kritieke deadlines (Critical Path) bewaken</div>
+          <span class="badge badge-warn" style="font-size:10px;white-space:nowrap">◐ Leverblokken + Productie-tracking in Collectielijst, geen Critical Path-view</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0">
+          <div><b>Kwaliteitsborging</b> — inspectierapporten (AQL-testen) registreren</div>
+          <span class="badge badge-error" style="font-size:10px;white-space:nowrap">✕ nog niet</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">6️⃣ Logistiek &amp; Overdracht naar Verkoop (ERP/WMS)</div>
+      <div style="font-size:12px;color:var(--ink-low);margin-bottom:10px">Zodra de productie is afgerond, stopt de primaire rol van PLM en start de commerciële fase.</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div><b>Data-integratie</b> — SKU's, barcodes en pakbonnen doorsturen naar ERP en e-commerce</div>
+          <span class="badge badge-ok" style="font-size:10px;white-space:nowrap">✓ Shopify-export, Power BI-export, Google Sheet-sync</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0">
+          <div><b>Uitlevering</b> — goederen verschepen naar distributiecentrum, winkels en consumenten</div>
+          <span class="badge badge-error" style="font-size:10px;white-space:nowrap">✕ buiten scope (fysieke logistiek)</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:11px;color:var(--ink-low);padding:10px 12px;background:var(--fill);border-radius:var(--radius)">
+      ℹ️ <b>Samenvattend</b>: de Collectie Cockpit dekt het sterkst stap 1 (collectieplanning), 4 (sampling) en 6 (data-integratie richting verkoop). De grootste openstaande gaten zitten bij stap 2 (Tech Pack/BOM), 3 (sourcing/duurzaamheid) en 5 (kwaliteitscontrole/AQL) — logische kandidaten om te bespreken als het team wil weten "wat dekken we nog niet".
+    </div>
+  </div>
+
 </div>
 
 <!-- ══ TAB: SEIZOENSVERGELIJKING ════════════════════════════ -->
 <div id="tab-seizoen" class="main hidden">
 
-  <div style="display:flex;gap:4px;margin-bottom:14px;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:6px;width:fit-content">
+  <div class="subtab-bar">
     <button class="btn btn-primary btn-sm szn-subtab active" onclick="setSeizoenSubTab('overzicht')" id="szntab-overzicht">📊 Overzicht</button>
     <button class="btn btn-ghost btn-sm szn-subtab" onclick="setSeizoenSubTab('leveranciers')" id="szntab-leveranciers">🏭 Leveranciers</button>
   </div>
@@ -2188,10 +2353,23 @@ function goBack() {
   switchTab(prev);
 }
 
+function updateBreadcrumb() {
+  const bc = document.getElementById('breadcrumb');
+  if (!bc) return;
+  const mainTab = document.querySelector('.tabs > .tab.active');
+  const activeMain = document.querySelector('.main:not(.hidden)');
+  const subTab = activeMain ? activeMain.querySelector('.subtab-bar .btn-primary') : null;
+  let html = mainTab ? mainTab.textContent.trim() : '';
+  if (subTab) html += ' <span style="margin:0 4px">›</span> ' + subTab.textContent.trim();
+  bc.innerHTML = html;
+}
+
 function updateBackBtn() {
   var btn = document.getElementById('backBtn');
-  if (!btn) return;
-  btn.style.display = _tabHistory.length >= 2 ? 'flex' : 'none';
+  var row = document.getElementById('backBtnRow');
+  var show = _tabHistory.length >= 2;
+  if (btn) btn.style.display = show ? 'flex' : 'none';
+  if (row) row.style.display = show ? 'block' : 'none';
 }
 
 let _lastCalcSubTab = 'invoer';
@@ -2238,12 +2416,13 @@ function switchTab(t) {
     if (_tabHistory.length > 20) _tabHistory.shift();
   }
   updateBackBtn();
+  updateBreadcrumb();
 }
 
 // ── Info sub-tabs: Data-inzichten / Aanbevelingen / Changelog ──
 function setInfoTab(sub) {
   _lastInfoSubTab = sub;
-  ['inzichten','aanbevelingen','roadmap','changelog'].forEach(s => {
+  ['inzichten','aanbevelingen','roadmap','changelog','plm'].forEach(s => {
     const panel = document.getElementById('info-' + s);
     if (panel) panel.classList.toggle('hidden', s !== sub);
     const btn = document.getElementById('infotab-' + s);
@@ -2252,6 +2431,7 @@ function setInfoTab(sub) {
       btn.classList.toggle('btn-ghost', s !== sub);
     }
   });
+  updateBreadcrumb();
   if (sub === 'inzichten')     { renderInzichtenQualityBars(); renderInzichtenStamGaps(); renderInzichtenVendors(); }
   if (sub === 'aanbevelingen') { renderRecCheckList(); renderMeetingTodos(); }
   if (sub === 'roadmap')       { renderRoadmap(); }
@@ -2410,6 +2590,7 @@ function setSeizoenSubTab(sub) {
   });
   if (sub === 'overzicht')    { renderSeizoen(); }
   if (sub === 'leveranciers') { renderLeveranciersTab(); }
+  updateBreadcrumb();
 }
 
 function setCalcTab(sub) {
@@ -2426,6 +2607,7 @@ function setCalcTab(sub) {
   if (sub === 'invoer')    { setTimeout(liveValidate, 100); }
   if (sub === 'overzicht') { filterTable(); }
   if (sub === 'controle')  { renderQualityReport(); }
+  updateBreadcrumb();
 }
 
 // ── Collectielijst sub-tabs: Invoer / Kwaliteit / Overzicht ──
@@ -2443,6 +2625,7 @@ function setColTab(sub) {
   if (sub === 'invoer')    { renderCollectielijst(); }
   if (sub === 'controle')  { renderColKwaliteit(); }
   if (sub === 'overzicht') { renderColOverzicht(); }
+  updateBreadcrumb();
 }
 
 // ══ STYLE SEARCH ════════════════════════════════════════════
@@ -4542,6 +4725,7 @@ function setStamTab(tab) {
     }
   });
   renderStamdata();
+  updateBreadcrumb();
 }
 
 function renderStamdata() {
@@ -5263,6 +5447,7 @@ function setInstTab(tab) {
     }
   });
   if (tab === 'versies') renderVersions();
+  updateBreadcrumb();
 }
 
 // ── Data-inzichten: aanvinkbare aanbevelingen ──────────────────
@@ -5838,6 +6023,15 @@ function entriesMatchMap() {
 }
 
 function renderPricat() {
+  const body = document.getElementById('pricatBody');
+  if (!body) return;
+  // 10.707 rijen kan een fractie van een seconde kosten om te filteren en
+  // te tekenen — een korte laadstatus voorkomt een "hangt de app?"-gevoel.
+  body.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--ink-low);padding:24px">⏳ Bezig met laden...</td></tr>';
+  setTimeout(renderPricatActual, 0);
+}
+
+function renderPricatActual() {
   const body = document.getElementById('pricatBody');
   if (!body) return;
   const all = expandPricatData();
@@ -7627,10 +7821,25 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
+    version: '3.2',
+    date: '2026-07-16',
+    author: 'Martijn Cornelissen',
+    active: true,
+    features: [
+      { name: 'UX: submenu-hiërarchie consistent gemaakt', desc: 'Alle 6 submenu-tabs (Stamdata, Calculatielijst, Collectielijst, Seizoensvergelijking, Info, Instellingen) gebruiken nu dezelfde lichtgrijze kader-stijl, duidelijk te onderscheiden van de hoofdtabs (tekst+onderstreping). Voorheen had elke sectie zijn eigen losse styling', tab: null, icon: '🎨' },
+      { name: 'Terugknop verplaatst uit de header', desc: 'Stond eerst naast het Brunotti-logo, op hetzelfde niveau als de branding. Nu op een eigen, kleinere secundaire regel direct boven de hoofdtab-balk — en verschijnt alleen als er ook echt geschiedenis is', tab: null, icon: '⬅️' },
+      { name: 'Nieuw: breadcrumb', desc: 'Toont nu altijd waar je bent (bv. "Seizoensvergelijking › Leveranciers"), live bijgewerkt bij elke tab- en submenu-wissel', tab: null, icon: '🧭' },
+      { name: 'Toast-meldingen kleurgecodeerd', desc: 'Meldingen rechtsonder krijgen nu automatisch een groene/oranje/rode rand op basis van het ✓/⚠/✗-teken waarmee ze beginnen — geen van de ~150 bestaande meldingen hoefde daarvoor aangepast', tab: null, icon: '🔔' },
+      { name: 'Focus-states voor toetsenbordgebruik', desc: 'Knoppen, links en klikbare elementen hebben nu een zichtbare focus-ring bij tab-navigatie', tab: null, icon: '⌨️' },
+      { name: 'Laadindicator voor PRICAT (10.707 rijen)', desc: 'Toont kort "⏳ Bezig met laden" vóórdat de zware filter/render start, zodat de browser dat kan tonen i.p.v. dat het scherm lijkt te hangen', tab: 'pricat', icon: '⏳' },
+      { name: 'Nieuw: 📚 PLM-proces onder Info', desc: 'De 6 stappen van het Fashion PLM-proces (van Trendanalyse tot Logistiek), met per stap een koppeling aan wat de Collectie Cockpit al wel/niet ondersteunt — inclusief een samenvattende conclusie over de grootste openstaande gaten (Tech Pack/BOM, sourcing/duurzaamheid, AQL)', tab: 'info', icon: '📚' },
+    ]
+  },
+  {
     version: '3.1',
     date: '2026-07-15',
     author: 'Martijn Cornelissen',
-    active: true,
+    active: false,
     features: [
       { name: 'Handleiding volledig herschreven', desc: 'De ingebouwde handleiding (Help-knop + Instellingen) noemde nog alleen Stamdata/Calculatielijst/Collectielijst uit de begintijd. Nu alle 9 tabs, inclusief PRICAT, Seizoensvergelijking (Overzicht + Leveranciers), Lineplan, en een nieuw blokje over hoe met de brondata om te gaan (PRICAT is leidend, ⏳ voorlopig-markering, matching op stijlnaam)', tab: 'versies', icon: '📖' },
       { name: 'Roadmap opgeschoond', desc: '3 punten verwijderd die al gerealiseerd bleken (BI_Export-tab, Apps Script in de repo, lichte meta-endpoint). "Embedded seed-data verwijderen" stond er nog als "1,9MB→300KB weghalen" terwijl we inmiddels bewust PRICAT/FW26/FW27/Lineplan hebben toegevoegd (nu 3,7MB) — tekst bijgewerkt naar de huidige realiteit', tab: 'info', icon: '🗺️' },
@@ -8980,9 +9189,18 @@ function testAndConnectGas() {
 
 // ══ TOAST ════════════════════════════════════════════════════
 let toastTimer;
-function showToast(msg) {
+function showToast(msg, type) {
   const t = document.getElementById('toast');
   t.textContent = msg;
+  // Automatische kleurcodering op basis van het voorvoegsel — zo hoeven de
+  // ~150 bestaande showToast(...)-aanroepen niet één voor één aangepast.
+  if (!type) {
+    if (msg.startsWith('✗')) type = 'error';
+    else if (msg.startsWith('⚠')) type = 'warning';
+    else type = 'success';
+  }
+  t.classList.remove('toast-success', 'toast-warning', 'toast-error');
+  t.classList.add('toast-' + type);
   t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
