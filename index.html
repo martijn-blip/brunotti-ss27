@@ -1032,6 +1032,7 @@
     <button class="btn btn-primary btn-sm stam-tab active" onclick="setStamTab('vendors')" id="stab-vendors">🏭 Leveranciers</button>
     <button class="btn btn-ghost btn-sm stam-tab" onclick="setStamTab('colours')" id="stab-colours">🎨 Kleuren</button>
     <button class="btn btn-ghost btn-sm stam-tab" onclick="setStamTab('fabrics')" id="stab-fabrics">🧵 Stoffen</button>
+    <button class="btn btn-ghost btn-sm stam-tab" onclick="setStamTab('quality')" id="stab-quality">🏷️ Product Kwaliteit</button>
     <button class="btn btn-ghost btn-sm stam-tab" onclick="setStamTab('hscodes')" id="stab-hscodes">📋 HS Codes</button>
     <button class="btn btn-ghost btn-sm stam-tab" onclick="setStamTab('fits')" id="stab-fits">📐 Pasvorm</button>
     <div style="flex-basis:100%;height:0"></div>
@@ -1151,8 +1152,26 @@
     </div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>Kwaliteit</th><th>Samenstelling</th><th>Gewicht</th><th>Leverancier</th><th>Stofleverancier</th><th>Stofcode</th><th>Prijs</th><th>MOQ bulk</th><th>Leadtime</th><th>Type</th><th>Opmerking</th><th>Acties</th></tr></thead>
+        <thead><tr><th>Kwaliteit</th><th>Samenstelling</th><th>Gewicht</th><th>Leverancier</th><th>Stofleverancier</th><th>Stofcode</th><th>Prijs</th><th>MOQ bulk</th><th>Leadtime</th><th>Type</th><th>Producten</th><th>Opmerking</th><th>Acties</th></tr></thead>
         <tbody id="fabricTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Nieuw: Product Kwaliteit — lichte laag bovenop dezelfde Stoffen-data -->
+  <div id="stam-quality" class="card hidden">
+    <div style="font-size:11px;color:var(--ink-low);margin-bottom:14px;padding:8px 12px;background:var(--fill);border-radius:var(--radius)">
+      🏷️ Overzicht van alle kwaliteit/samenstelling-omschrijvingen die in Invoer als keuze verschijnen (veld "Kwaliteit"). Dit is dezelfde data als Stoffen — hier zie je alleen de kern (kwaliteit + samenstelling) zonder alle leveranciers-/prijsvelden, handig om snel een nieuwe kwaliteit toe te voegen. Volledig bewerken (leverancier, prijs, MOQ) doe je in Stoffen.
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <input type="text" id="qualitySearch" placeholder="🔍 Zoek kwaliteit of samenstelling..." oninput="renderProductQuality()" style="max-width:320px">
+      <button class="btn btn-success btn-sm" onclick="addProductQualityRow()">+ Nieuwe kwaliteit</button>
+    </div>
+    <div class="stats-row" id="qualityStats" style="margin-bottom:14px"></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Kwaliteit</th><th>Samenstelling</th><th># stoffen met deze kwaliteit</th><th>Producten</th><th>Acties</th></tr></thead>
+        <tbody id="qualityTableBody"></tbody>
       </table>
     </div>
   </div>
@@ -3582,7 +3601,7 @@ function filterTable() {
 
   const filtered = entries.filter(e => {
     if (szn && getSeason(e) !== szn) return false;
-    if (q && !`${e.styleNumber} ${e.styleName} ${e.colourName} ${e.colourNumber} ${e.vendor} ${e.subgroup}`.toLowerCase().includes(q)) return false;
+    if (q && !`${e.styleNumber} ${e.styleName} ${e.colourName} ${e.colourNumber} ${e.vendor} ${e.subgroup} ${e.quality}`.toLowerCase().includes(q)) return false;
     if (col && e.collectieGroep !== col) return false;
     if (grp && e.group !== grp) return false;
     if (seg && e.segment !== seg) return false;
@@ -4799,7 +4818,7 @@ function setStamTab(tab) {
   if (!_keepStamFilter && _stamIssueFilter) _stamIssueFilter = null;
   currentStamTab = tab;
   window._currentStamTab = tab;
-  ['vendors','colours','fabrics','hscodes','fits','colarticlecode','taxonomy'].forEach(t => {
+  ['vendors','colours','fabrics','quality','hscodes','fits','colarticlecode','taxonomy'].forEach(t => {
     const panel = document.getElementById('stam-' + t);
     if (panel) panel.classList.toggle('hidden', t !== tab);
     const btn = document.getElementById('stab-' + t);
@@ -4819,6 +4838,7 @@ function renderStamdata() {
     case 'vendors':  renderVendors();  break;
     case 'colours':  renderColours();  break;
     case 'fabrics':  renderFabrics();  break;
+    case 'quality':  renderProductQuality(); break;
     case 'hscodes':  renderHSCodes();  break;
     case 'fits':     renderFits();     break;
     case 'colarticlecode':  renderColArticleCodeStam(); break;
@@ -5119,6 +5139,24 @@ function addColourRow() {
 }
 
 // ── FABRICS ───────────────────────────────────────────────────
+// Hoeveel Calculatielijst-artikelen (entries) gebruiken een bepaalde kwaliteit
+// — en een manier om er direct naartoe te springen. Matching is exact maar
+// hoofdletterongevoelig, zelfde manier waarop het Kwaliteit-veld al overal
+// wordt vergeleken.
+function countEntriesForQuality(quality) {
+  if (!quality) return 0;
+  const q = quality.trim().toLowerCase();
+  return entries.filter(e => (e.quality || '').trim().toLowerCase() === q).length;
+}
+
+function openQualityInCalculatielijst(quality) {
+  switchTab('calculatielijst');
+  setCalcTab('overzicht');
+  const el = document.getElementById('tableSearch');
+  if (el) el.value = quality;
+  filterTable();
+}
+
 function renderFabrics() {
   const q  = (document.getElementById('fabricSearch')?.value || '').toLowerCase();
   const ft = document.getElementById('fabricType')?.value || '';
@@ -5157,13 +5195,95 @@ function renderFabrics() {
       <td class="mono" style="font-size:11px;max-width:110px" title="${escAttr(String(f.moqBulk||''))}">${String(f.moqBulk||'—').slice(0,16)}${String(f.moqBulk||'').length>16?'…':''}</td>
       <td style="font-size:11px">${lt||'—'}</td>
       <td><span class="badge ${(f.type||'').includes('ACTIVE')?'badge-ok':'badge-blue'}">${f.type||'—'}</span></td>
+      <td style="white-space:nowrap">${(() => {
+        const n = countEntriesForQuality(f.quality);
+        return n
+          ? `<a href="#" onclick="openQualityInCalculatielijst('${f.quality.replace(/'/g,"\\'")}');return false" class="badge badge-blue" style="text-decoration:none;cursor:pointer" title="Bekijk deze ${n} artikelen in Calculatielijst">🔗 ${n} product${n===1?'':'en'}</a>`
+          : `<span class="badge" style="background:var(--fill);color:var(--ink-low)">0</span>`;
+      })()}</td>
       <td style="font-size:11px;color:var(--ink-low);max-width:140px" title="${f.remark||''}">${(f.remark||'').slice(0,40)}${(f.remark||'').length>40?'…':''}</td>
       <td style="white-space:nowrap">
         <button class="btn btn-ghost btn-sm" onclick="editFabric(${ri})" title="Bewerken"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
         <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteStam('fabrics',${ri})" title="Verwijderen">✕</button>
       </td>
     </tr>`;
-  }).join('') || '<tr><td colspan="12" style="text-align:center;color:var(--ink-low);padding:20px">Geen resultaten</td></tr>';
+  }).join('') || '<tr><td colspan="13" style="text-align:center;color:var(--ink-low);padding:20px">Geen resultaten</td></tr>';
+}
+
+// ── PRODUCT KWALITEIT ────────────────────────────────────────
+function renderProductQuality() {
+  const body = document.getElementById('qualityTableBody');
+  if (!body) return;
+  const q = (document.getElementById('qualitySearch')?.value || '').toLowerCase();
+
+  const byQuality = new Map();
+  masterData.fabrics.forEach(f => {
+    if (!f.quality) return;
+    if (!byQuality.has(f.quality)) byQuality.set(f.quality, { composition: f.composition || '', count: 0 });
+    byQuality.get(f.quality).count++;
+  });
+  let rows = [...byQuality.entries()].map(([quality, v]) => ({ quality, ...v }));
+  if (q) rows = rows.filter(r => r.quality.toLowerCase().includes(q) || r.composition.toLowerCase().includes(q));
+  rows.sort((a, b) => a.quality.localeCompare(b.quality));
+
+  const statsEl = document.getElementById('qualityStats');
+  if (statsEl) {
+    const withComposition = [...byQuality.values()].filter(v => v.composition).length;
+    statsEl.innerHTML = `
+      <div class="stat-card"><div class="stat-label">Unieke kwaliteiten</div><div class="stat-value" style="color:var(--blue)">${byQuality.size}</div></div>
+      <div class="stat-card"><div class="stat-label">Met samenstelling</div><div class="stat-value" style="color:${withComposition===byQuality.size?'var(--teal)':'var(--amber)'}">${withComposition}/${byQuality.size}</div></div>
+    `;
+  }
+
+  body.innerHTML = rows.map(r => `
+    <tr>
+      <td style="font-weight:600;font-size:12px">${r.quality}</td>
+      <td style="font-size:11px;color:${r.composition?'var(--ink-mid)':'var(--red)'}">${r.composition || '<em>ontbreekt</em>'}</td>
+      <td class="mono" style="text-align:center">${r.count}</td>
+      <td style="white-space:nowrap">${(() => {
+        const n = countEntriesForQuality(r.quality);
+        return n
+          ? `<a href="#" onclick="openQualityInCalculatielijst('${r.quality.replace(/'/g,"\\'")}');return false" class="badge badge-blue" style="text-decoration:none;cursor:pointer" title="Bekijk deze ${n} artikelen in Calculatielijst">🔗 ${n} product${n===1?'':'en'}</a>`
+          : `<span class="badge" style="background:var(--fill);color:var(--ink-low)">0</span>`;
+      })()}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-ghost btn-sm" onclick="editProductQuality('${r.quality.replace(/'/g, "\\'")}')" title="Bewerken"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="btn btn-ghost btn-sm" onclick="openQualityInFabrics('${r.quality.replace(/'/g, "\\'")}')" title="Volledig bewerken in Stoffen (leverancier, prijs, MOQ...)">🧵 Stoffen</button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--ink-low);padding:20px">Geen resultaten</td></tr>';
+}
+
+function editProductQuality(quality) {
+  const rec = masterData.fabrics.find(f => f.quality === quality);
+  const count = masterData.fabrics.filter(f => f.quality === quality).length;
+  editingStam = { type: 'productQuality', originalQuality: quality };
+  document.getElementById('modalTitle').textContent = '✏ Kwaliteit bewerken';
+  document.getElementById('modalBody').innerHTML = `
+    <div style="font-size:11px;color:var(--ink-low);margin-bottom:12px">Wijzigingen gelden voor alle ${count} Stoffen-record${count===1?'':'s'} mét deze kwaliteit, en verhuizen automatisch mee voor Calculatielijst-artikelen die 'm gebruiken.</div>
+    <div class="grid grid-2" style="gap:12px">
+      <div class="field col-span-2"><label>Kwaliteit naam <span class="req">*</span></label><input id="m_quality" value="${escAttr(quality)}"></div>
+      <div class="field col-span-2"><label>Samenstelling</label><input id="m_comp" value="${escAttr(rec?.composition || '')}"></div>
+    </div>`;
+  document.getElementById('editModal').style.display = 'flex';
+}
+
+function addProductQualityRow() {
+  editingStam = { type: 'fabrics', index: -1 };
+  document.getElementById('modalTitle').textContent = '+ Nieuwe product kwaliteit';
+  document.getElementById('modalBody').innerHTML = `
+    <div style="font-size:11px;color:var(--ink-low);margin-bottom:12px">Voegt een nieuwe kwaliteit toe aan Stoffen. Leverancier, prijs en andere details vul je later aan via Stoffen zelf.</div>
+    <div class="grid grid-2" style="gap:12px">
+      <div class="field col-span-2"><label>Kwaliteit naam <span class="req">*</span></label><input id="m_quality" placeholder="bv. Recycled Ocean Polyester 4-Way Stretch"></div>
+      <div class="field col-span-2"><label>Samenstelling</label><input id="m_comp" placeholder="bv. 90% Recycled Polyester, 10% Elastane"></div>
+    </div>`;
+  document.getElementById('editModal').style.display = 'flex';
+}
+
+function openQualityInFabrics(quality) {
+  setStamTab('fabrics');
+  const el = document.getElementById('fabricSearch');
+  if (el) { el.value = quality; }
+  renderStamdata();
 }
 
 function editFabric(i) {
@@ -5441,6 +5561,30 @@ function saveModalEdit() {
     const no = n('m_no'), name = g('m_fitname');
     if (!no || !name) { showToast('⚠ Nummer en naam zijn verplicht'); return; }
     newRecord = { no: parseInt(g('m_no')), name };
+  } else if (type === 'productQuality') {
+    const newQuality = g('m_quality'), newComp = g('m_comp');
+    const original = editingStam.originalQuality;
+    if (!newQuality) { showToast('⚠ Kwaliteit naam is verplicht'); return; }
+    let fabricsChanged = 0, entriesChanged = 0;
+    masterData.fabrics.forEach(f => {
+      if (f.quality === original) {
+        f.quality = newQuality;
+        f.composition = newComp;
+        fabricsChanged++;
+      }
+    });
+    entries.forEach(e => {
+      if ((e.quality || '') === original) {
+        e.quality = newQuality;
+        entriesChanged++;
+      }
+    });
+    persistData();
+    closeModal();
+    renderStamdata();
+    updateOverview();
+    showToast(`✓ "${newQuality}" bijgewerkt (${fabricsChanged} stof${fabricsChanged===1?'':'fen'}${entriesChanged ? `, ${entriesChanged} artikel${entriesChanged===1?'':'en'} meeverhuisd` : ''})`);
+    return;
   }
 
   if (newRecord) {
@@ -8115,10 +8259,25 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
+    version: '3.4',
+    date: '2026-08-13',
+    author: 'Martijn Cornelissen',
+    active: true,
+    features: [
+      { name: 'SS27-PRICAT bijgewerkt (28 juli)', desc: 'SS27 ging van 452 naar 597 unieke stijl+kleur-combinaties — de collectie groeit richting de deadline. Overige seizoenen blijven uit de 15 juli-bron. Werkt direct door in Seizoensvergelijking, PRICAT-tab en Leveranciers-inzicht', tab: 'pricat', icon: '📁' },
+      { name: 'Nieuw: PRICAT-versievergelijker', desc: 'Upload twee PRICAT-exports (of gebruik de huidige app-data als één van de twee) om nieuwe en vervallen stijl+kleur-combinaties te zien. Kolommen worden op naam herkend, dus werkt ook bij een net andere kolomvolgorde. Inclusief CSV-export van de delta', tab: 'pricat', icon: '🔄' },
+      { name: 'Pantone-kleuren aangevuld', desc: '116 bestaande kleuren kregen hun lege Pantone-waarde ingevuld op basis van een officiële kleurenkaart-PDF (coördinaten-gebaseerde extractie, gevalideerd tegen bekende waarden), plus 17 nieuwe kleurvarianten voor codes die in de bron dubbel gebruikt werden (bv. Flamingo Men/Women)', tab: 'stamdata', icon: '🎨' },
+      { name: 'Nieuw: Product Kwaliteit in Stamdata', desc: 'Lichte, doorzoekbare laag bovenop dezelfde Stoffen-data — kwaliteit + samenstelling, met een simpel toevoegformulier en een teller die laat zien hoeveel Calculatielijst-artikelen elke kwaliteit gebruikt (klikbaar naar Overzicht). Kwaliteit bewerken werkt alle Stoffen-records én Calculatielijst-artikelen in één keer bij, zodat de koppeling niet breekt', tab: 'stamdata', icon: '🏷️' },
+      { name: 'Stamdata reset-knop', desc: 'Nieuwe knop in Instellingen om de lokale browser-Stamdata te wissen wanneer een update aan de ingebouwde Stamdata niet zichtbaar wordt (localStorage heeft normaal voorrang)', tab: 'versies', icon: '🔄' },
+      { name: 'Leverancier-filter en prijspositionering per categorie', desc: 'Seizoensvergelijking → Overzicht heeft nu ook een leverancier-filter. Leveranciers-tab: Prijspositionering uitgesplitst per segment+productgroep i.p.v. één gemiddeld cijfer', tab: 'seizoen', icon: '🏭' },
+      { name: 'Filterbalk Calculatielijst niet meer sticky', desc: 'De filterbalk in Overzicht scrollt nu gewoon mee met de pagina', tab: 'calculatielijst', icon: '📌' },
+    ]
+  },
+  {
     version: '3.3',
     date: '2026-07-16',
     author: 'Martijn Cornelissen',
-    active: true,
+    active: false,
     features: [
       { name: 'Terug/breadcrumb verplaatst naar onder het submenu', desc: 'Stonden eerst tussen de hoofdtab-balk en het submenu — logischer is: eerst navigeren (hoofdmenu → submenu), dan pas de "waar ben ik"-bevestiging vlak boven de inhoud. Verplaatst zich nu automatisch per tab (of bovenaan de inhoud bij tabs zonder submenu, zoals PRICAT/Lineplan)', tab: null, icon: '🧭' },
       { name: 'Aanbevelingen volledig vervangen', desc: 'Verouderde/tegenstrijdige punten eruit (o.a. "stop met Excel" — terwijl we juist bewust meer Excel-bronnen zijn gaan gebruiken). Nieuw: 7 concrete, actuele actiepunten uit alles wat vandaag is ontdekt — 3 niet-herkende FW27-leveranciers, 13 nieuwe productgroepen, 17 te reconciliëren FW26-styles, marge-targets bevestigen, PLM-proces gaten, en meer', tab: 'info', icon: '💡' },
