@@ -4236,10 +4236,16 @@ function resetStamdataToBuiltIn() {
     'HS Codes, Pasvorm) door de ingebouwde versie uit dit bestand.\n\n' +
     'Eigen wijzigingen die nog niet gesynchroniseerd zijn met het team gaan ' +
     'hierbij verloren — synchroniseer eerst als je twijfelt.\n\n' +
+    'Let op: als het team-Drive nog de oudere Stamdata heeft, klik dan na het ' +
+    'herladen meteen op "Synchroniseren met team", anders wordt deze reset zelf ' +
+    'weer stil overschreven door de oudere teamversie.\n\n' +
     'Doorgaan?'
   );
   if (!ok) return;
   localStorage.removeItem('brunotti_ss27_master');
+  // Voorkomt dat de automatische Drive-sync bij het herladen deze reset meteen
+  // weer ongedaan maakt met een oudere teamversie — geldt maar voor één herlaad.
+  localStorage.setItem('brunotti_ss27_skipNextAutoSync', '1');
   showToast('✓ Stamdata gereset — pagina wordt herladen...');
   setTimeout(() => location.reload(), 900);
 }
@@ -8259,10 +8265,19 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
-    version: '3.4',
+    version: '3.5',
     date: '2026-08-13',
     author: 'Martijn Cornelissen',
     active: true,
+    features: [
+      { name: 'Bugfix: Stamdata-reset werd stil overschreven door team-sync', desc: 'Na "Stamdata resetten" haalde de automatische Drive-sync bij het herladen alsnog de (oudere) teamversie op, zonder melding — waardoor een reset leek te werken maar na een refresh weer verdween. De reset-knop slaat de eerstvolgende auto-sync nu eenmalig over en vraagt je expliciet om daarna "Synchroniseren met team" te klikken', tab: 'versies', icon: '🐛' },
+    ]
+  },
+  {
+    version: '3.4',
+    date: '2026-08-13',
+    author: 'Martijn Cornelissen',
+    active: false,
     features: [
       { name: 'SS27-PRICAT bijgewerkt (28 juli)', desc: 'SS27 ging van 452 naar 597 unieke stijl+kleur-combinaties — de collectie groeit richting de deadline. Overige seizoenen blijven uit de 15 juli-bron. Werkt direct door in Seizoensvergelijking, PRICAT-tab en Leveranciers-inzicht', tab: 'pricat', icon: '📁' },
       { name: 'Nieuw: PRICAT-versievergelijker', desc: 'Upload twee PRICAT-exports (of gebruik de huidige app-data als één van de twee) om nieuwe en vervallen stijl+kleur-combinaties te zien. Kolommen worden op naam herkend, dus werkt ook bij een net andere kolomvolgorde. Inclusief CSV-export van de delta', tab: 'pricat', icon: '🔄' },
@@ -9046,8 +9061,17 @@ function initMsal() {
     var loadBtn = document.getElementById('syncLoadBtn');
     if (saveBtn) saveBtn.style.display = '';
     if (loadBtn) loadBtn.style.display = '';
-    // Auto-load on startup
-    loadFromSharePoint(true);
+    // Auto-load on startup — behalve direct na een Stamdata-reset: dan zou
+    // deze anders de net-herstelde ingebouwde Stamdata weer stil overschrijven
+    // met de (mogelijk verouderde) teamversie uit Drive, vóórdat de gebruiker
+    // de kans heeft gehad om de nieuwe Stamdata terug te synchroniseren.
+    if (localStorage.getItem('brunotti_ss27_skipNextAutoSync') === '1') {
+      localStorage.removeItem('brunotti_ss27_skipNextAutoSync');
+      setSyncStatus('online', 'Verbonden', 'Auto-sync eenmalig overgeslagen na Stamdata-reset — klik "Synchroniseren met team" om de nieuwe Stamdata te delen');
+      showToast('ℹ️ Auto-sync overgeslagen zodat de ingebouwde Stamdata zichtbaar blijft. Klik op "Synchroniseren met team" om te delen.');
+    } else {
+      loadFromSharePoint(true);
+    }
   }
 }
 
