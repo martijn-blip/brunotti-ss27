@@ -1334,7 +1334,7 @@
 <div id="tab-pricat" class="main hidden">
 
   <div style="font-size:11px;color:var(--ink-low);margin-bottom:12px;padding:8px 12px;background:var(--fill);border-radius:var(--radius);display:inline-block">
-    ℹ️ De PRICAT is de leidende bron voor alle producten uit alle seizoenen (bestand: <b>PRICAT_150726.xlsx</b> = 15 juli 2026). Artikelen die hier wél in staan maar nog niet in de Calculatielijst/Collectielijst zijn opgenomen, worden duidelijk gemarkeerd. <b>FW27</b> staat nog niet in PRICAT — die 517 artikelen zijn tijdelijk aangevuld vanuit de FW27-Collectielijst en gemarkeerd met ⏳, en worden bijgewerkt zodra FW27 in PRICAT verschijnt.
+    ℹ️ De PRICAT is de leidende bron voor alle producten uit alle seizoenen. <b>SS27</b> is bijgewerkt op <b>28 juli 2026</b> (597 stijl+kleur-combinaties, was 452 op 15 juli) — overige seizoenen komen uit <b>PRICAT_150726.xlsx</b> (15 juli 2026). Artikelen die hier wél in staan maar nog niet in de Calculatielijst/Collectielijst zijn opgenomen, worden duidelijk gemarkeerd. <b>FW27</b> staat nog niet in PRICAT — die 517 artikelen zijn tijdelijk aangevuld vanuit de FW27-Collectielijst en gemarkeerd met ⏳, en worden bijgewerkt zodra FW27 in PRICAT verschijnt.
   </div>
 
   <div class="card">
@@ -8265,10 +8265,19 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
-    version: '3.5',
+    version: '3.6',
     date: '2026-08-13',
     author: 'Martijn Cornelissen',
     active: true,
+    features: [
+      { name: 'PRICAT-infobanner tekst gecorrigeerd', desc: 'De banner bovenaan de PRICAT-tab noemde nog steeds "PRICAT_150726.xlsx = 15 juli 2026", terwijl SS27 al sinds v3.4 is bijgewerkt naar de 28 juli-versie (597 combinaties). De onderliggende data was al goed — dit was puur een verouderde tekst die verwarring kon geven', tab: 'pricat', icon: '📝' },
+    ]
+  },
+  {
+    version: '3.5',
+    date: '2026-08-13',
+    author: 'Martijn Cornelissen',
+    active: false,
     features: [
       { name: 'Bugfix: Stamdata-reset werd stil overschreven door team-sync', desc: 'Na "Stamdata resetten" haalde de automatische Drive-sync bij het herladen alsnog de (oudere) teamversie op, zonder melding — waardoor een reset leek te werken maar na een refresh weer verdween. De reset-knop slaat de eerstvolgende auto-sync nu eenmalig over en vraagt je expliciet om daarna "Synchroniseren met team" te klikken', tab: 'versies', icon: '🐛' },
     ]
