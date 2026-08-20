@@ -4319,6 +4319,10 @@ async function syncMasterDataVersion() {
         body: JSON.stringify(payload),
         headers: { 'Content-Type': 'text/plain' },
       });
+      // Ook lokaal netjes taggen, zodat deze browser bij een volgend bezoek
+      // niet opnieuw met een ongetagde/verouderde cache blijft zitten.
+      saveMasterDataLocally();
+      updateMasterDataVersionLabel();
       // Stil — dit is routine-onderhoud, geen gebruikersactie, dus geen toast.
       console.info('Stamdata v' + currentMasterDataVersion + ' automatisch gedeeld met team (was v' + driveVersion + ' op Drive)');
     }
@@ -6724,21 +6728,33 @@ function saveMasterDataLocally() {
 // Load persisted master data on init (user edits override Excel data)
 (function() {
   const saved = localStorage.getItem('brunotti_ss27_master');
-  if (saved) {
-    try {
-      masterData = JSON.parse(saved);
-      // Nog geen versienummer gecachet (bestond van vóór deze functionaliteit)?
-      // Behandel als "onbekend/oud" (0), zodat een écht nieuwere ingebouwde of
-      // Drive-versie 'm correct kan inhalen bij de eerstvolgende versiecheck.
-      const savedVer = parseInt(localStorage.getItem('brunotti_ss27_masterVersion') || '0', 10);
-      currentMasterDataVersion = isNaN(savedVer) ? 0 : savedVer;
-    } catch(e) {}
+  const savedVerRaw = localStorage.getItem('brunotti_ss27_masterVersion');
+  let usedEmbeddedDefault = true;
+  if (saved && savedVerRaw !== null) {
+    // Alleen een gecachete Stamdata vertrouwen als er ook een geldig
+    // versienummer bij staat. Geen versienummer? Dan is het een cache van
+    // vóór deze functionaliteit — die kunnen we niet vergelijken en dus niet
+    // vertrouwen, dus negeren we 'm bewust en houden we de ingebouwde
+    // MASTER_DATA/MASTER_DATA_VERSION aan (die is altijd bekend-goed). Zonder
+    // deze check zou een oude, ongetagde cache voor altijd "gelijk" lijken
+    // aan een even ongetagde (0) Drive-waarde, en nooit meer worden ingehaald.
+    const savedVer = parseInt(savedVerRaw, 10);
+    if (!isNaN(savedVer)) {
+      try {
+        masterData = JSON.parse(saved);
+        currentMasterDataVersion = savedVer;
+        usedEmbeddedDefault = false;
+      } catch(e) {}
+    }
   }
   // Eenmalige samenvoeging: Collectielijst-HS-codes en -Fabric Info in de
   // bewerkbare stamdata (beide idempotent)
   const _hsM = migrateColHsCodesIntoMaster();
   const _fabM = migrateColFabricsIntoMaster();
-  if (_hsM || _fabM) {
+  // Stale/ongetagde cache genegeerd (of net gemigreerd)? Direct de correcte,
+  // getagde versie lokaal opslaan — zo hoeft deze browser niet te wachten op
+  // de volgende Drive-sync om zelf ook consistent te zijn.
+  if (_hsM || _fabM || usedEmbeddedDefault) {
     saveMasterDataLocally();
   }
 })();
@@ -8364,10 +8380,19 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
-    version: '3.10',
+    version: '3.11',
     date: '2026-08-20',
     author: 'Martijn Cornelissen',
     active: true,
+    features: [
+      { name: 'Bugfix: oude ongetagde browser-cache blokkeerde de nieuwe Stamdata-versiesync', desc: 'De v3.10-fix vergeleek Stamdata op versienummer, maar een browser met een oude cache van vóór die functionaliteit (dus zonder versienummer) werd behandeld als "versie 0" — én als Drive toevallig ook nog "versie 0" had (nooit getagd), leek alles gelijk en gebeurde er niets, waardoor de oude data (bv. 293 kleuren i.p.v. 310) bleef hangen. Een ongetagde cache wordt nu genegeerd en vervangen door de bekend-goede ingebouwde Stamdata, die zich vervolgens vanzelf naar Drive verspreidt', tab: 'versies', icon: '🐛' },
+    ]
+  },
+  {
+    version: '3.10',
+    date: '2026-08-20',
+    author: 'Martijn Cornelissen',
+    active: false,
     features: [
       { name: 'Stamdata-sync structureel herbouwd: automatisch, geen knoppen meer nodig', desc: 'De vorige aanpak (handmatig resetten + eventueel forceren) was verwarrend en loste het probleem niet fundamenteel op. Stamdata heeft nu een eigen versienummer, losstaand van de Calculatielijst-sync. Bij elk bezoek wordt dat automatisch vergeleken met Google Drive: de hoogste versie wint altijd, ongeacht tijdstempels. Staat Drive achter? Dan wordt de actuele Stamdata er automatisch naartoe gepusht — zonder de Calculatielijst-artikelen van het team aan te raken. In de Sheet staat zo altijd de laatste versie, en die wordt door iedereen vanzelf ingeladen. De twee losse noodknoppen zijn vervangen door één simpele "Cache wissen & verversen"-optie', tab: 'versies', icon: '🔄' },
     ]
