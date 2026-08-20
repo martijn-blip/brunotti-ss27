@@ -8265,10 +8265,19 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
-    version: '3.7',
+    version: '3.8',
     date: '2026-08-20',
     author: 'Martijn Cornelissen',
     active: true,
+    features: [
+      { name: 'Bugfix: sync kon voor onbepaalde tijd blijven hangen op "Bezig..."', desc: 'De verbinding met de Google Drive-backend had geen timeout — als de server traag reageerde, vastliep (quotum, her-autorisatie nodig) of het netwerk haperde, bleef de statusbadge voor onbepaalde tijd op "Bezig..." staan zonder ooit een foutmelding te tonen. Elke sync-aanroep breekt nu na 20 seconden netjes af met een duidelijke foutmelding, zodat je weet dat er iets mis is in plaats van eindeloos te wachten', tab: 'versies', icon: '⏱️' },
+    ]
+  },
+  {
+    version: '3.7',
+    date: '2026-08-20',
+    author: 'Martijn Cornelissen',
+    active: false,
     features: [
       { name: 'Bugfix: Stamdata-updates bereikten teamleden met eigen wijzigingen niet', desc: 'Calculatielijst-artikelen (entries) en Stamdata (masterData) werden voor conflict-detectie als één geheel behandeld. Zodra een teamlid ook maar één niet-gesynchroniseerde artikel-wijziging had, werd bijgewerkte Stamdata (zoals de Pantone-kleuren) stilzwijgend niet opgehaald — zonder duidelijke melding. Stamdata wordt nu apart en automatisch bijgewerkt zodra die verschilt van de teamversie, ook als er nog niet-gesynchroniseerde artikelen openstaan. Die artikelen blijven gewoon onaangeroerd tot de gebruiker zelf synchroniseert', tab: 'versies', icon: '🐛' },
     ]
@@ -9207,6 +9216,25 @@ function hasUnsyncedChanges() {
   return entries.length > 0; // nog nooit gesynchroniseerd, maar wel al data
 }
 
+// Standaard fetch() heeft geen timeout — als de Apps Script-backend traag
+// reageert of vastloopt (quotum, her-autorisatie nodig, netwerkprobleem),
+// bleef de sync-status voor onbepaalde tijd op "Bezig..." staan zonder ooit
+// een fout te tonen. Deze helper breekt na 20 seconden netjes af.
+async function fetchWithTimeout(url, options, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs || 20000);
+  try {
+    return await fetch(url, Object.assign({}, options, { signal: controller.signal }));
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error('Geen reactie van de server binnen 20 seconden (mogelijk Apps Script-quotum, her-autorisatie nodig, of netwerkprobleem)');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function syncToSharePoint(force) {
   if (!APPS_SCRIPT_URL) { showGasConfig(); return; }
 
@@ -9222,7 +9250,7 @@ async function syncToSharePoint(force) {
     if (!force) {
       setSyncStatus('syncing', 'Controleren...', 'Controleren op wijzigingen van teamleden');
       try {
-        var checkRes = await fetch(APPS_SCRIPT_URL + '?action=load', { method: 'GET' });
+        var checkRes = await fetchWithTimeout(APPS_SCRIPT_URL + '?action=load', { method: 'GET' });
         var checkData = await checkRes.json();
         if (checkData.status === 'ok' && checkData.savedAt) {
           var cloudTime = new Date(checkData.savedAt).getTime();
@@ -9276,7 +9304,7 @@ async function syncToSharePoint(force) {
       }
     };
 
-    var res = await fetch(APPS_SCRIPT_URL, {
+    var res = await fetchWithTimeout(APPS_SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify(payload),
       headers: { 'Content-Type': 'text/plain' }, // Apps Script vereist text/plain voor CORS
@@ -9308,7 +9336,7 @@ async function loadFromSharePoint(silent) {
   if (!silent) setSyncStatus('syncing', 'Laden...', 'Bezig met laden vanuit Google Drive');
 
   try {
-    var res = await fetch(APPS_SCRIPT_URL + '?action=load', { method: 'GET' });
+    var res = await fetchWithTimeout(APPS_SCRIPT_URL + '?action=load', { method: 'GET' });
     var data = await res.json();
 
     if (data.status === 'empty') {
@@ -9515,12 +9543,12 @@ async function runAutoSync() {
     // Apps Script dat (nog) niet ondersteunt, terugvallen op de volledige load.
     var checkData = null;
     try {
-      var metaRes = await fetch(APPS_SCRIPT_URL + '?action=meta', { method: 'GET' });
+      var metaRes = await fetchWithTimeout(APPS_SCRIPT_URL + '?action=meta', { method: 'GET' });
       var metaJson = await metaRes.json();
       if (metaJson && metaJson.status === 'ok' && metaJson.savedAt) checkData = metaJson;
     } catch (metaErr) { /* meta niet ondersteund of mislukt — fallback hieronder */ }
     if (!checkData) {
-      var checkRes = await fetch(APPS_SCRIPT_URL + '?action=load', { method: 'GET' });
+      var checkRes = await fetchWithTimeout(APPS_SCRIPT_URL + '?action=load', { method: 'GET' });
       checkData = await checkRes.json();
     }
     if (checkData.status === 'ok' && checkData.savedAt) {
@@ -9543,7 +9571,7 @@ async function runAutoSync() {
         masterData: masterData,
       }
     };
-    var res  = await fetch(APPS_SCRIPT_URL, {
+    var res  = await fetchWithTimeout(APPS_SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify(payload),
       headers: { 'Content-Type': 'text/plain' },
