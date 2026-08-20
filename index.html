@@ -8265,10 +8265,19 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
+    version: '3.7',
+    date: '2026-08-20',
+    author: 'Martijn Cornelissen',
+    active: true,
+    features: [
+      { name: 'Bugfix: Stamdata-updates bereikten teamleden met eigen wijzigingen niet', desc: 'Calculatielijst-artikelen (entries) en Stamdata (masterData) werden voor conflict-detectie als één geheel behandeld. Zodra een teamlid ook maar één niet-gesynchroniseerde artikel-wijziging had, werd bijgewerkte Stamdata (zoals de Pantone-kleuren) stilzwijgend niet opgehaald — zonder duidelijke melding. Stamdata wordt nu apart en automatisch bijgewerkt zodra die verschilt van de teamversie, ook als er nog niet-gesynchroniseerde artikelen openstaan. Die artikelen blijven gewoon onaangeroerd tot de gebruiker zelf synchroniseert', tab: 'versies', icon: '🐛' },
+    ]
+  },
+  {
     version: '3.6',
     date: '2026-08-13',
     author: 'Martijn Cornelissen',
-    active: true,
+    active: false,
     features: [
       { name: 'PRICAT-infobanner tekst gecorrigeerd', desc: 'De banner bovenaan de PRICAT-tab noemde nog steeds "PRICAT_150726.xlsx = 15 juli 2026", terwijl SS27 al sinds v3.4 is bijgewerkt naar de 28 juli-versie (597 combinaties). De onderliggende data was al goed — dit was puur een verouderde tekst die verwarring kon geven', tab: 'pricat', icon: '📝' },
     ]
@@ -9321,11 +9330,28 @@ async function loadFromSharePoint(silent) {
         // onze lokale data heen zetten: hebben wij zelf nog wijzigingen
         // die nog niet gesynchroniseerd zijn?
         if (hasUnsyncedChanges()) {
+          // Stamdata (masterData) en Calculatielijst-artikelen (entries) zijn
+          // twee losse dingen — iemand met een niet-gesynchroniseerde artikel-
+          // wijziging hoeft daarom niet verstoken te blijven van bijgewerkte
+          // Stamdata (bv. Pantone-kleuren). Alleen masterData wordt in dat
+          // geval stil bijgewerkt; entries blijven ongemoeid staan totdat de
+          // gebruiker zelf synchroniseert of expliciet "Ophalen van team" kiest.
+          if (data.masterData && JSON.stringify(data.masterData) !== JSON.stringify(masterData)) {
+            masterData = data.masterData;
+            const _hsm2 = migrateColHsCodesIntoMaster();
+            const _fbm2 = migrateColFabricsIntoMaster();
+            try { localStorage.setItem('brunotti_ss27_master', JSON.stringify(masterData)); } catch (cacheErr) {}
+            populateInvoerDatalists();
+            if (typeof renderStamdata === 'function' && document.getElementById('tab-stamdata') && !document.getElementById('tab-stamdata').classList.contains('hidden')) {
+              renderStamdata();
+            }
+            if (_hsm2 || _fbm2) persistData();
+            showToast('✓ Stamdata bijgewerkt vanuit het team — je eigen niet-gesynchroniseerde artikel-wijzigingen blijven behouden');
+          }
           if (silent) {
             // Niet automatisch overschrijven bij opstarten — lokale
             // wijzigingen blijven veilig staan totdat gebruiker kiest.
             setSyncStatus('online', 'Nieuwere versie', 'Nieuwere teamversie beschikbaar — je hebt zelf nog niet-gesynchroniseerde wijzigingen');
-            showToast('⚠ Nieuwere teamversie beschikbaar, maar jij hebt niet-gesynchroniseerde lokale wijzigingen. Synchroniseer eerst, of klik "Ophalen van team" om je lokale wijzigingen te verwijderen.');
             return;
           }
           var overwrite = confirm(
