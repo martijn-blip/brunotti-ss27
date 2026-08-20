@@ -1466,6 +1466,17 @@
       </div>
     </div>
 
+    <!-- Stamdata force-push naar Drive -->
+    <div style="margin-bottom:16px;padding:12px;background:var(--red-l);border-radius:var(--radius)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--ink-mid);margin-bottom:2px">🚀 Stamdata forceren naar het team (noodgreep)</div>
+          <div style="font-size:10px;color:var(--ink-low);max-width:520px">Gebruik dit alleen als "Stamdata resetten" niet blijft plakken — bv. omdat Google Drive toevallig een <em>recentere tijdstempel</em> heeft dan de laatste keer dat er verouderde Stamdata werd opgeslagen, waardoor die verouderde versie steeds terugkomt. Dit zet de Stamdata die je nú in deze browser hebt definitief op Drive, ongeacht wat daar al staat. Calculatielijst-artikelen van het team blijven ongewijzigd.</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="white-space:nowrap;border-color:var(--red);color:var(--red)" onclick="forcePushStamdataToTeam()">🚀 Forceren naar Drive</button>
+      </div>
+    </div>
+
     <!-- Auto-save settings -->
     <div style="display:flex;gap:16px;align-items:center;padding:12px;background:var(--blue-l);border-radius:var(--radius);flex-wrap:wrap">
       <div style="font-size:13px;font-weight:600;color:var(--blue)">⚙ Auto-opslaan</div>
@@ -4248,6 +4259,60 @@ function resetStamdataToBuiltIn() {
   localStorage.setItem('brunotti_ss27_skipNextAutoSync', '1');
   showToast('✓ Stamdata gereset — pagina wordt herladen...');
   setTimeout(() => location.reload(), 900);
+}
+
+// Noodgreep: de normale sync-knoppen vergelijken altijd op tijdstip ("is Drive
+// recenter?") — maar een tijdstip zegt niets over of de inhoud ook écht beter
+// is. Als Drive toevallig een recentere tijdstempel heeft dan de laatste keer
+// dat iemand er verouderde Stamdata op zette, blijft de normale sync die
+// verouderde Stamdata steeds opnieuw naar iedereen toe trekken — ook na een
+// Stamdata-reset. Deze functie negeert die tijdstempel-vergelijking bewust en
+// zet de huidige (lokale, correcte) Stamdata definitief op Drive, zodat die
+// daarna wél de juiste, meest recente versie is voor de rest van het team.
+// De Calculatielijst-artikelen van Drive zelf blijven ongemoeid (die worden
+// eerst opgehaald en ongewijzigd teruggezet, om niemands werk te overschrijven).
+async function forcePushStamdataToTeam() {
+  if (!APPS_SCRIPT_URL) { showGasConfig(); return; }
+  const ok = confirm(
+    '🚀 Dit zet de Stamdata die je nú in deze browser hebt definitief op Google ' +
+    'Drive, ongeacht wat daar al staat — bedoeld om een vastgelopen sync-lus te ' +
+    'doorbreken (bv. na een Stamdata-reset die steeds werd teruggedraaid).\n\n' +
+    'De Calculatielijst-artikelen van het team blijven ongewijzigd; alleen ' +
+    'Stamdata (Leveranciers/Kleuren/Stoffen/HS Codes/Pasvorm) wordt overschreven.\n\n' +
+    'Gebruik dit alleen als je zeker weet dat JOUW Stamdata (in deze browser) ' +
+    'de juiste, meest actuele versie is. Doorgaan?'
+  );
+  if (!ok) return;
+  setSyncStatus('syncing', 'Forceren...', 'Stamdata forceren naar Google Drive');
+  try {
+    const res = await fetchWithTimeout(APPS_SCRIPT_URL + '?action=load', { method: 'GET' });
+    const data = await res.json();
+    const entriesToKeep = (data && data.status === 'ok' && Array.isArray(data.entries)) ? data.entries : entries;
+    const payload = {
+      action: 'save',
+      payload: {
+        savedAt:    new Date().toISOString(),
+        savedBy:    (localStorage.getItem('brunotti_ss27_user') || 'onbekend') + ' (stamdata force-push)',
+        version:    APP_VERSION,
+        entries:    entriesToKeep,
+        masterData: masterData,
+      }
+    };
+    const res2 = await fetchWithTimeout(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'text/plain' },
+    });
+    const data2 = await res2.json();
+    if (data2.status !== 'ok') throw new Error(data2.error || 'Onbekende fout');
+    localStorage.setItem('brunotti_ss27_lastSync', new Date().toISOString());
+    markSynced();
+    setSyncStatus('online', 'Opgeslagen', '✓ Stamdata geforceerd naar Drive — nu de actuele versie voor iedereen');
+    showToast('✓ Stamdata definitief naar Drive gepusht. Vraag teamleden om te verversen.');
+  } catch (err) {
+    setSyncStatus('error', 'Fout', 'Forceren mislukt — probeer het later opnieuw');
+    showToast('✗ Forceren mislukt: ' + err.message);
+  }
 }
 
 function loadVersions() {
@@ -8265,10 +8330,19 @@ async function applyBulkEdit() {
 
 const APP_CHANGELOG = [
   {
-    version: '3.8',
+    version: '3.9',
     date: '2026-08-20',
     author: 'Martijn Cornelissen',
     active: true,
+    features: [
+      { name: 'Nieuw: "Stamdata forceren naar het team" (noodgreep)', desc: 'Ontdekt: als Google Drive toevallig een recentere tijdstempel heeft dan de laatste keer dat er verouderde Stamdata werd opgeslagen, blijft de normale sync die verouderde versie steeds opnieuw naar iedereen trekken — óók ná een Stamdata-reset, want "recenter" betekent niet automatisch "beter". Nieuwe knop in Instellingen negeert bewust die tijdstempel-vergelijking en zet de huidige Stamdata definitief op Drive, zonder Calculatielijst-artikelen van het team aan te raken. Bedoeld als eenmalige noodgreep om deze vastgelopen situatie te doorbreken', tab: 'versies', icon: '🚀' },
+    ]
+  },
+  {
+    version: '3.8',
+    date: '2026-08-20',
+    author: 'Martijn Cornelissen',
+    active: false,
     features: [
       { name: 'Bugfix: sync kon voor onbepaalde tijd blijven hangen op "Bezig..."', desc: 'De verbinding met de Google Drive-backend had geen timeout — als de server traag reageerde, vastliep (quotum, her-autorisatie nodig) of het netwerk haperde, bleef de statusbadge voor onbepaalde tijd op "Bezig..." staan zonder ooit een foutmelding te tonen. Elke sync-aanroep breekt nu na 20 seconden netjes af met een duidelijke foutmelding, zodat je weet dat er iets mis is in plaats van eindeloos te wachten', tab: 'versies', icon: '⏱️' },
     ]
